@@ -1,51 +1,44 @@
 'use client'
 
 import React from 'react';
-import { useAuth } from '../ui/Context/AuthContext';
-import { useRouter } from 'next/navigation';
+import PrivateRoute from '../ui/components/PrivateRoute';
 
 export default function Dashboard() {
-    const { currentUser, logout } = useAuth();
-    const router = useRouter();
-
-    const handleLogout = async () => {
-        try {
-            await logout();
-            router.push('/');
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    };
-
-    if (!currentUser) {
-        router.push('/login');
-        return null;
-    }
-
     return (
-        <div className="min-h-screen bg-gray-700 p-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-white">
-                        Welcome, {currentUser.email}!
+        <PrivateRoute>
+            <div className="min-h-screen bg-gray-700 p-8">
+                <div className="max-w-4xl mx-auto">
+                    <h1 className="text-3xl font-bold text-white mb-8">
+                        Dashboard
                     </h1>
-                    <button
-                        onClick={handleLogout}
-                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                    >
-                        Logout
-                    </button>
-                </div>
 
-                <div className="bg-gray-800 p-6 rounded-lg">
-                    <h2 className="text-xl font-semibold text-white mb-4">
-                        Your Dashboard
-                    </h2>
-                    <p className="text-gray-300">
-                        This is your interview preparation dashboard. More features coming soon!
-                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                            <h3 className="text-xl font-semibold text-white mb-2">Practice Interview</h3>
+                            <p className="text-gray-300 mb-4">Start a mock interview session</p>
+                            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                Start Practice
+                            </button>
+                        </div>
+
+                        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                            <h3 className="text-xl font-semibold text-white mb-2">Job Tracker</h3>
+                            <p className="text-gray-300 mb-4">Manage your applications</p>
+                            <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                                View Jobs
+                            </button>
+                        </div>
+
+                        <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                            <h3 className="text-xl font-semibold text-white mb-2">Profile</h3>
+                            <p className="text-gray-300 mb-4">Update your information</p>
+                            <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                                Edit Profile
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </PrivateRoute>
     );
 }
