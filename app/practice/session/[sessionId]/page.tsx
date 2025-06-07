@@ -7,9 +7,10 @@ import {
     getPracticeSession,
     getUserProfile,
     getJob,
-    updatePracticeSession
+    updatePracticeSession,
+    saveAnswer
 } from '../../../Services/firebase/firestore';
-import { generateQuestions } from '../../../Services/openai/functions';
+import { generateQuestions, getAnswerFeedback, suggestTags } from '../../../Services/openai/functions';
 import { PracticeSession as SessionType, Question, UserProfile, Job, QuestionCategory } from '../../../types';
 import PrivateRoute from '../../../ui/components/PrivateRoute';
 import ProfileCheck from '../../../ui/components/ProfileCheck';
@@ -26,8 +27,13 @@ export default function PracticeSession() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
     const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
     const [userAnswer, setUserAnswer] = useState<string>('');
+    const [feedback, setFeedback] = useState<string>('');
+    const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [savedAnswer, setSavedAnswer] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [generatingQuestions, setGeneratingQuestions] = useState<boolean>(false);
+    const [gettingFeedback, setGettingFeedback] = useState<boolean>(false);
 
     // Load session data on component mount
     useEffect(() => {
@@ -124,6 +130,63 @@ export default function PracticeSession() {
         }
     };
 
+    // Request feedback for the current answer
+    const requestFeedback = async () => {
+        if (!currentQuestion || !userAnswer.trim() || !userProfile) return;
+
+        try {
+            setGettingFeedback(true);
+
+            const feedbackText = await getAnswerFeedback(
+                currentQuestion.text,
+                userAnswer,
+                userProfile,
+                job || undefined
+            );
+
+            setFeedback(feedbackText);
+
+            // Get suggested tags
+            const tags = await suggestTags(currentQuestion.text, userAnswer, job || undefined);
+            setSuggestedTags(tags);
+            setSelectedTags(tags);
+        } catch (error) {
+            console.error('Error getting feedback:', error);
+            setFeedback('I couldn\'t generate feedback at this time. Your answer looks good!');
+        } finally {
+            setGettingFeedback(false);
+        }
+    };
+
+    // Save the current answer
+    const saveCurrentAnswer = async () => {
+        if (!currentQuestion || !userAnswer.trim() || !currentUser) return;
+
+        try {
+            setLoading(true);
+
+            await saveAnswer({
+                userId: currentUser.uid,
+                questionId: currentQuestion.id,
+                questionText: currentQuestion.text,
+                answerText: userAnswer,
+                category: currentQuestion.category,
+                feedback: feedback || '',
+                tags: selectedTags.length > 0 ? selectedTags : ['interview'],
+                jobId: job?.id,
+                isFavorite: false
+            });
+
+            setSavedAnswer(true);
+            alert('Answer saved successfully!');
+        } catch (error) {
+            console.error('Error saving answer:', error);
+            alert('Failed to save answer');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Move to next question
     const handleNextQuestion = async () => {
         if (!session || !session.questions) return;
@@ -142,9 +205,24 @@ export default function PracticeSession() {
             setCurrentQuestionIndex(nextIndex);
             setCurrentQuestion(session.questions[nextIndex]);
             setUserAnswer('');
+            setFeedback('');
+            setSuggestedTags([]);
+            setSelectedTags([]);
+            setSavedAnswer(false);
         } catch (error) {
             console.error('Error updating session:', error);
         }
+    };
+
+    // Handle tag selection
+    const handleTagToggle = (tag: string) => {
+        setSelectedTags(prev => {
+            if (prev.includes(tag)) {
+                return prev.filter(t => t !== tag);
+            } else {
+                return [...prev, tag];
+            }
+        });
     };
 
     const getCategoryBadgeColor = (category: QuestionCategory) => {
@@ -257,27 +335,105 @@ export default function PracticeSession() {
                                     value={userAnswer}
                                     onChange={(e) => setUserAnswer(e.target.value)}
                                     rows={8}
-                                    className="w-full p-3 border rounded bg-gray-700 text-white border-gray-600 resize-none"
+                                    disabled={savedAnswer}
+                                    className="w-full p-3 border rounded bg-gray-700 text-white border-gray-600 resize-none disabled:opacity-50"
                                     placeholder="Type your answer here..."
                                 />
                             </div>
 
-                            {/* Navigation */}
-                            <div className="flex justify-between">
-                                <button
-                                    onClick={() => router.push('/dashboard')}
-                                    className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-                                >
-                                    Exit Session
-                                </button>
+                            {/* Get Feedback Button */}
+                            {!feedback && (
+                                <div className="mb-6 flex justify-end">
+                                    <button
+                                        onClick={requestFeedback}
+                                        disabled={!userAnswer.trim() || gettingFeedback || savedAnswer}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                                    >
+                                        {gettingFeedback ? 'Getting Feedback...' : 'Get AI Feedback'}
+                                    </button>
+                                </div>
+                            )}
 
-                                <button
-                                    onClick={handleNextQuestion}
-                                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-                                >
-                                    {currentQuestionIndex + 1 >= (session?.questions?.length || 0) ? 'Complete Session' : 'Next Question'}
-                                </button>
-                            </div>
+                            {/* Feedback Display */}
+                            {feedback && (
+                                <div className="mb-6 bg-blue-900/20 border border-blue-600/30 p-4 rounded">
+                                    <h3 className="text-lg font-medium text-blue-200 mb-2">AI Feedback</h3>
+                                    <p className="text-sm text-blue-100 whitespace-pre-line">{feedback}</p>
+                                </div>
+                            )}
+
+                            {/* Tags */}
+                            {feedback && !savedAnswer && (
+                                <div className="mb-6">
+                                    <h3 className="text-sm font-medium text-white mb-2">Tags</h3>
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {suggestedTags.map((tag) => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => handleTagToggle(tag)}
+                                                className={`px-2 py-1 rounded text-xs font-medium ${selectedTags.includes(tag)
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                                                    }`}
+                                            >
+                                                {tag}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex justify-end space-x-3">
+                                        <button
+                                            onClick={() => {
+                                                setUserAnswer('');
+                                                setFeedback('');
+                                                setSuggestedTags([]);
+                                                setSelectedTags([]);
+                                            }}
+                                            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                                        >
+                                            Revise Answer
+                                        </button>
+                                        <button
+                                            onClick={saveCurrentAnswer}
+                                            disabled={loading}
+                                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                                        >
+                                            {loading ? 'Saving...' : 'Save Answer'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Navigation */}
+                            {savedAnswer && (
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={handleNextQuestion}
+                                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                                    >
+                                        {currentQuestionIndex + 1 >= (session?.questions?.length || 0) ? 'Complete Session' : 'Next Question'}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Skip Question Option */}
+                            {!savedAnswer && (
+                                <div className="flex justify-between">
+                                    <button
+                                        onClick={() => router.push('/dashboard')}
+                                        className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                                    >
+                                        Exit Session
+                                    </button>
+
+                                    <button
+                                        onClick={handleNextQuestion}
+                                        className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+                                    >
+                                        Skip Question
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
