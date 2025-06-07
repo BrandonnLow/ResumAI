@@ -94,3 +94,33 @@ export const getJobs = async (userId: string): Promise<Job[]> => {
         return [];
     }
 };
+
+export const getJob = async (jobId: string): Promise<Job | null> => {
+    const jobRef = doc(db, 'jobs', jobId);
+    const jobSnap = await getDoc(jobRef);
+
+    if (jobSnap.exists()) {
+        const data = jobSnap.data();
+        return {
+            id: jobSnap.id,
+            ...data,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date()
+        } as Job;
+    }
+
+    return null;
+};
+
+export const updateJob = async (job: Partial<Job> & { id: string }) => {
+    const jobRef = doc(db, 'jobs', job.id);
+    await updateDoc(jobRef, {
+        ...job,
+        updatedAt: serverTimestamp()
+    });
+};
+
+export const deleteJob = async (jobId: string) => {
+    const jobRef = doc(db, 'jobs', jobId);
+    await deleteDoc(jobRef);
+};
