@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../ui/Context/AuthContext';
-import { getJobs } from '../../Services/firebase/firestore';
-import { QuestionCategory, Job } from '../../types';
+import { getUserProfile, getJobs, createPracticeSession } from '../../Services/firebase/firestore';
+import { QuestionCategory, UserProfile, Job } from '../../types';
 import PrivateRoute from '../../ui/components/PrivateRoute';
 import ProfileCheck from '../../ui/components/ProfileCheck';
 
@@ -15,21 +15,28 @@ export default function PracticeSetup() {
     const [selectedJob, setSelectedJob] = useState<string>('');
     const [categories, setCategories] = useState<QuestionCategory[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchJobs = async () => {
+        const fetchData = async () => {
             if (!currentUser) return;
 
             try {
-                const userJobs = await getJobs(currentUser.uid);
+                // Fetch user profile and jobs
+                const [profile, userJobs] = await Promise.all([
+                    getUserProfile(currentUser.uid),
+                    getJobs(currentUser.uid)
+                ]);
+
+                setUserProfile(profile);
                 setJobs(userJobs);
             } catch (error) {
-                console.error('Error fetching jobs:', error);
+                console.error('Error fetching data:', error);
             }
         };
 
-        fetchJobs();
+        fetchData();
     }, [currentUser]);
 
     const handleCategoryToggle = (category: QuestionCategory) => {
@@ -48,14 +55,26 @@ export default function PracticeSetup() {
             return;
         }
 
+        if (sessionType === 'job-specific' && !selectedJob) {
+            alert('Please select a job for job-specific practice');
+            return;
+        }
+
         try {
             setLoading(true);
 
-            // For now, just navigate to a placeholder practice page
-            // We'll implement the actual session creation in the next commit
-            router.push('/practice/session/demo');
+            // Create practice session in Firestore
+            const sessionId = await createPracticeSession(
+                currentUser!.uid,
+                categories,
+                sessionType === 'job-specific' ? selectedJob : undefined
+            );
+
+            // Navigate to practice session
+            router.push(`/practice/session/${sessionId}`);
         } catch (error) {
-            console.error('Error starting session:', error);
+            console.error('Error creating session:', error);
+            alert('Failed to start practice session. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -121,6 +140,11 @@ export default function PracticeSetup() {
                                                 </option>
                                             ))}
                                         </select>
+                                        {jobs.length === 0 && (
+                                            <p className="mt-2 text-sm text-yellow-400">
+                                                No jobs found. Add a job first or choose general practice.
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </div>
