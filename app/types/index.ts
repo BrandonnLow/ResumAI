@@ -57,6 +57,32 @@ export interface Extracurricular {
     endDate?: string;
 }
 
+// Question and Answer types
+export type QuestionCategory = 'Motivational' | 'Behavioral' | 'Technical' | 'Personality';
+
+export interface Question {
+    id: string;
+    text: string;
+    category: QuestionCategory;
+    jobSpecific: boolean;
+    jobId?: string;
+}
+
+export interface Answer {
+    id: string;
+    userId: string;
+    questionId: string;
+    questionText: string;
+    answerText: string;
+    category: QuestionCategory;
+    feedback?: string;
+    tags: string[];
+    jobId?: string;
+    isFavorite: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 // Job types
 export type JobStatus = 'Drafted' | 'Submitted' | 'Interviewing' | 'Offer' | 'Rejected';
 
@@ -70,4 +96,15 @@ export interface Job {
     notes?: string;
     createdAt: Date;
     updatedAt: Date;
+}
+
+// Session types
+export interface PracticeSession {
+    id: string;
+    userId: string;
+    jobId?: string;
+    categories: QuestionCategory[];
+    questions: Question[];
+    currentQuestionIndex: number;
+    createdAt: Date;
 }
