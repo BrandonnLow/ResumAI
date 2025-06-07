@@ -13,7 +13,7 @@ import {
     deleteDoc,
     serverTimestamp
 } from 'firebase/firestore';
-import { UserProfile, Job } from '../../types';
+import { UserProfile, Job, Answer, PracticeSession, QuestionCategory, Question } from '../../types';
 
 // User Profile Functions
 export const createUserProfile = async (profile: Omit<UserProfile, 'createdAt' | 'updatedAt'>) => {
@@ -123,4 +123,84 @@ export const updateJob = async (job: Partial<Job> & { id: string }) => {
 export const deleteJob = async (jobId: string) => {
     const jobRef = doc(db, 'jobs', jobId);
     await deleteDoc(jobRef);
+};
+
+// Practice Session Functions
+export const createPracticeSession = async (
+    userId: string,
+    categories: QuestionCategory[],
+    jobId?: string
+): Promise<string> => {
+    const sessionRef = collection(db, 'practice_sessions');
+    const newSession = await addDoc(sessionRef, {
+        userId,
+        jobId: jobId || null,
+        categories,
+        questions: [],
+        currentQuestionIndex: 0,
+        createdAt: serverTimestamp()
+    });
+
+    return newSession.id;
+};
+
+export const getPracticeSession = async (sessionId: string): Promise<PracticeSession | null> => {
+    const sessionRef = doc(db, 'practice_sessions', sessionId);
+    const sessionSnap = await getDoc(sessionRef);
+
+    if (sessionSnap.exists()) {
+        const data = sessionSnap.data();
+        return {
+            id: sessionSnap.id,
+            ...data,
+            questions: data.questions || [],
+            currentQuestionIndex: data.currentQuestionIndex || 0,
+            createdAt: data.createdAt?.toDate() || new Date()
+        } as PracticeSession;
+    }
+
+    return null;
+};
+
+export const updatePracticeSession = async (
+    sessionId: string,
+    questions: Question[],
+    currentQuestionIndex: number
+) => {
+    const sessionRef = doc(db, 'practice_sessions', sessionId);
+    await updateDoc(sessionRef, {
+        questions,
+        currentQuestionIndex
+    });
+};
+
+// Answer Functions
+export const saveAnswer = async (answer: Omit<Answer, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const answersRef = collection(db, 'answers');
+    return addDoc(answersRef, {
+        ...answer,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    });
+};
+
+export const getAnswers = async (userId: string): Promise<Answer[]> => {
+    try {
+        const answersQuery = query(
+            collection(db, 'answers'),
+            where('userId', '==', userId),
+            orderBy('updatedAt', 'desc')
+        );
+
+        const answersSnap = await getDocs(answersQuery);
+        return answersSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate() || new Date(),
+            updatedAt: doc.data().updatedAt?.toDate() || new Date()
+        } as Answer));
+    } catch (error) {
+        console.error('Error fetching answers:', error);
+        return [];
+    }
 };
