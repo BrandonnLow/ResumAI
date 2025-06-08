@@ -175,13 +175,35 @@ export const updatePracticeSession = async (
 };
 
 // Answer Functions
+
 export const saveAnswer = async (answer: Omit<Answer, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const answersRef = collection(db, 'answers');
-    return addDoc(answersRef, {
-        ...answer,
+    // Validate required fields
+    if (!answer.userId) throw new Error('userId is required');
+    if (!answer.questionId) throw new Error('questionId is required');
+    if (!answer.questionText) throw new Error('questionText is required');
+    if (!answer.answerText) throw new Error('answerText is required');
+    if (!answer.category) throw new Error('category is required');
+
+    const cleanAnswer: any = {
+        userId: answer.userId,
+        questionId: answer.questionId,
+        questionText: answer.questionText,
+        answerText: answer.answerText,
+        category: answer.category,
+        feedback: answer.feedback || '',
+        tags: Array.isArray(answer.tags) && answer.tags.length > 0 ? answer.tags : ['interview'],
+        isFavorite: answer.isFavorite ?? false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-    });
+    };
+
+    // Only add jobId if it exists
+    if (answer.jobId) {
+        cleanAnswer.jobId = answer.jobId;
+    }
+
+    const answersRef = collection(db, 'answers');
+    return addDoc(answersRef, cleanAnswer);
 };
 
 export const getAnswers = async (userId: string): Promise<Answer[]> => {
@@ -203,4 +225,34 @@ export const getAnswers = async (userId: string): Promise<Answer[]> => {
         console.error('Error fetching answers:', error);
         return [];
     }
+};
+
+export const updateAnswer = async (answer: Partial<Answer> & { id: string }) => {
+    const answerRef = doc(db, 'answers', answer.id);
+    await updateDoc(answerRef, {
+        ...answer,
+        updatedAt: serverTimestamp()
+    });
+};
+
+export const deleteAnswer = async (answerId: string) => {
+    const answerRef = doc(db, 'answers', answerId);
+    await deleteDoc(answerRef);
+};
+
+export const getAnswersByJob = async (userId: string, jobId: string): Promise<Answer[]> => {
+    const answersQuery = query(
+        collection(db, 'answers'),
+        where('userId', '==', userId),
+        where('jobId', '==', jobId),
+        orderBy('updatedAt', 'desc')
+    );
+
+    const answersSnap = await getDocs(answersQuery);
+    return answersSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date()
+    } as Answer));
 };
