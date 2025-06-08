@@ -1,9 +1,9 @@
 // Basic PDF parsing utilities
-// This is a placeholder implementation for PDF text extraction
+// Placeholder implementation for PDF text extraction, will further research on the best library to use
+// You'll use pdf-parse or pdf2pic in most cases
 
 export const parsePdfText = async (file: File): Promise<string> => {
     // For now, we'll just throw an error to indicate this feature needs implementation
-    // In a real implementation, you would use a library like pdf-parse or pdf2pic
     throw new Error('PDF parsing not yet implemented. Please enter information manually.');
 };
 
