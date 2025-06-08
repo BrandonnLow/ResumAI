@@ -27,7 +27,7 @@ export default function Nav() {
         <nav className="h-16 bg-gray-800 border-b border-gray-700">
             <div className="flex justify-between items-center h-full px-6">
                 <Link href="/" className="text-2xl font-bold text-white">
-                    resuMate
+                    PersonaPrep
                 </Link>
 
                 {!isAuthPage && currentUser && (

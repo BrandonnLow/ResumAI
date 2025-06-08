@@ -13,7 +13,8 @@ import {
     deleteDoc,
     serverTimestamp
 } from 'firebase/firestore';
-import { UserProfile, Job, Answer, PracticeSession, QuestionCategory, Question } from '../../types';
+import { UserProfile, Job, Answer, PracticeSession, QuestionCategory, Question, JobStatus } from '../../types';
+
 
 // User Profile Functions
 export const createUserProfile = async (profile: Omit<UserProfile, 'createdAt' | 'updatedAt'>) => {
@@ -255,4 +256,20 @@ export const getAnswersByJob = async (userId: string, jobId: string): Promise<An
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate() || new Date()
     } as Answer));
+};
+
+export const updateJobStatus = async (jobId: string, status: JobStatus) => {
+    if (!jobId) {
+        throw new Error('Job ID is required');
+    }
+
+    if (!status) {
+        throw new Error('Status is required');
+    }
+
+    const jobRef = doc(db, 'jobs', jobId);
+    await updateDoc(jobRef, {
+        status,
+        updatedAt: serverTimestamp()
+    });
 };
