@@ -7,11 +7,14 @@ import {
     getPracticeSession,
     getUserProfile,
     getJob,
-    updatePracticeSession,
     saveAnswer
 } from '../../../Services/firebase/firestore';
 import { generateQuestions, getAnswerFeedback, suggestTags } from '../../../Services/openai/functions';
 import { PracticeSession as SessionType, Question, UserProfile, Job, QuestionCategory } from '../../../types';
+import toast from 'react-hot-toast';
+import { serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../../Services/firebase/config';
 import PrivateRoute from '../../../ui/components/PrivateRoute';
 import ProfileCheck from '../../../ui/components/ProfileCheck';
 
@@ -34,6 +37,7 @@ export default function PracticeSession() {
     const [loading, setLoading] = useState<boolean>(true);
     const [generatingQuestions, setGeneratingQuestions] = useState<boolean>(false);
     const [gettingFeedback, setGettingFeedback] = useState<boolean>(false);
+    const [customTagInput, setCustomTagInput] = useState('');
 
     // Load session data on component mount
     useEffect(() => {
@@ -42,16 +46,20 @@ export default function PracticeSession() {
 
             try {
                 setLoading(true);
+                setGeneratingQuestions(true);
 
                 // Fetch practice session
                 const sessionData = await getPracticeSession(sessionId);
+
                 if (!sessionData) {
-                    alert('Practice session not found');
+                    toast.error('Practice session not found');
+                    setGeneratingQuestions(false);
                     return router.push('/practice/setup');
                 }
 
                 if (sessionData.userId !== currentUser.uid) {
-                    alert('You do not have access to this session');
+                    toast.error('You do not have access to this session');
+                    setGeneratingQuestions(false);
                     return router.push('/practice/setup');
                 }
 
@@ -61,7 +69,8 @@ export default function PracticeSession() {
                 // Fetch user profile
                 const profile = await getUserProfile(currentUser.uid);
                 if (!profile) {
-                    alert('User profile not found');
+                    toast.error('User profile not found');
+                    setGeneratingQuestions(false);
                     return router.push('/profile/setup');
                 }
                 setUserProfile(profile);
@@ -75,17 +84,25 @@ export default function PracticeSession() {
 
                 // Check if this is a new session (no questions)
                 if (!sessionData.questions || sessionData.questions.length === 0) {
-                    setGeneratingQuestions(true);
+                    toast.dismiss();
+                    toast.loading('Generating personalized interview questions...');
+
                     await generateSessionQuestions(sessionData, profile, jobData);
                 } else {
+                    setGeneratingQuestions(false);
+
                     const questionIndex = sessionData.currentQuestionIndex || 0;
                     if (sessionData.questions.length > questionIndex) {
                         setCurrentQuestion(sessionData.questions[questionIndex]);
+                    } else if (sessionData.questions.length > 0) {
+                        setCurrentQuestion(sessionData.questions[0]);
+                        setCurrentQuestionIndex(0);
                     }
                 }
             } catch (error) {
                 console.error('Error loading session data:', error);
-                alert('Failed to load session data');
+                toast.error('Failed to load session data. Please try again.');
+                setGeneratingQuestions(false);
             } finally {
                 setLoading(false);
             }
@@ -100,6 +117,8 @@ export default function PracticeSession() {
         profile: UserProfile,
         job?: Job | null
     ) => {
+        if (!sessionId) return;
+
         try {
             const questionsData = await generateQuestions(
                 profile,
@@ -108,23 +127,60 @@ export default function PracticeSession() {
                 job || undefined
             );
 
-            const questions: Question[] = questionsData.map((q, index) => ({
-                id: `q-${Date.now()}-${index}`,
-                text: q.text,
-                category: q.category,
-                jobSpecific: !!job,
-                jobId: job?.id
-            }));
+            if (!questionsData || !Array.isArray(questionsData) || questionsData.length === 0) {
+                toast.dismiss();
+                toast.error('Failed to generate questions. Please try again.');
+                setGeneratingQuestions(false);
+                return;
+            }
 
-            // Update session with generated questions
-            await updatePracticeSession(sessionId, questions, 0);
+            const questions: Question[] = questionsData.map((q, index) => {
+                const cleanQuestion: Question = {
+                    id: `q-${Date.now()}-${index}`,
+                    text: q.text || `Question ${index + 1}`,
+                    category: q.category || 'Behavioral' as QuestionCategory,
+                    jobSpecific: !!job
+                };
 
-            setSession(prev => prev ? { ...prev, questions } : null);
-            setCurrentQuestion(questions[0]);
-            setCurrentQuestionIndex(0);
+                if (job && job.id) {
+                    cleanQuestion.jobId = job.id;
+                }
+
+                return cleanQuestion;
+            });
+
+            if (questions.length === 0) {
+                toast.dismiss();
+                toast.error('No questions could be generated. Please try again.');
+                setGeneratingQuestions(false);
+                return;
+            }
+
+            const sessionUpdate = {
+                questions: questions,
+                currentQuestionIndex: 0,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                const sessionRef = doc(db, 'practice_sessions', sessionId);
+                await updateDoc(sessionRef, sessionUpdate);
+
+                setSession(prev => prev ? { ...prev, questions } : null);
+                setCurrentQuestion(questions[0]);
+                setCurrentQuestionIndex(0);
+
+                toast.dismiss();
+                toast.success('Questions generated!');
+            } catch (updateError) {
+                console.error('Error updating practice session:', updateError);
+                toast.dismiss();
+                toast.error('Failed to save questions. Please try again.');
+            }
         } catch (error) {
             console.error('Error generating questions:', error);
-            alert('Failed to generate questions');
+            toast.dismiss();
+            toast.error('Failed to generate questions. Please try again.');
         } finally {
             setGeneratingQuestions(false);
         }
@@ -136,6 +192,7 @@ export default function PracticeSession() {
 
         try {
             setGettingFeedback(true);
+            toast.loading('Getting AI feedback on your answer...');
 
             const feedbackText = await getAnswerFeedback(
                 currentQuestion.text,
@@ -144,15 +201,31 @@ export default function PracticeSession() {
                 job || undefined
             );
 
-            setFeedback(feedbackText);
+            setFeedback(feedbackText || 'No feedback available.');
 
-            // Get suggested tags
-            const tags = await suggestTags(currentQuestion.text, userAnswer, job || undefined);
-            setSuggestedTags(tags);
-            setSelectedTags(tags);
+            try {
+                const tags = await suggestTags(currentQuestion.text, userAnswer, job || undefined);
+                if (tags && Array.isArray(tags) && tags.length > 0) {
+                    setSuggestedTags(tags);
+                    setSelectedTags(tags);
+                } else {
+                    const defaultTags = ['interview', currentQuestion.category.toLowerCase()];
+                    setSuggestedTags(defaultTags);
+                    setSelectedTags(defaultTags);
+                }
+            } catch (tagError) {
+                console.error('Error getting tags:', tagError);
+                const defaultTags = ['interview', currentQuestion.category.toLowerCase()];
+                setSuggestedTags(defaultTags);
+                setSelectedTags(defaultTags);
+            }
+
+            toast.dismiss();
         } catch (error) {
             console.error('Error getting feedback:', error);
-            setFeedback('I couldn\'t generate feedback at this time. Your answer looks good!');
+            toast.dismiss();
+            toast.error('Failed to get feedback. Please try again.');
+            setFeedback('I couldn\'t generate detailed feedback at this time. Consider reviewing your answer for clarity, relevance to the question, and specific examples that demonstrate your skills and experience.');
         } finally {
             setGettingFeedback(false);
         }
@@ -165,7 +238,7 @@ export default function PracticeSession() {
         try {
             setLoading(true);
 
-            await saveAnswer({
+            const answerData: any = {
                 userId: currentUser.uid,
                 questionId: currentQuestion.id,
                 questionText: currentQuestion.text,
@@ -173,34 +246,65 @@ export default function PracticeSession() {
                 category: currentQuestion.category,
                 feedback: feedback || '',
                 tags: selectedTags.length > 0 ? selectedTags : ['interview'],
-                jobId: job?.id,
                 isFavorite: false
-            });
+            };
+
+            if (job && job.id) {
+                answerData.jobId = job.id;
+            }
+
+            await saveAnswer(answerData);
 
             setSavedAnswer(true);
-            alert('Answer saved successfully!');
+            toast.success('Answer saved successfully!');
         } catch (error) {
             console.error('Error saving answer:', error);
-            alert('Failed to save answer');
+            toast.error('Failed to save answer. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Move to next question
+    // Move to the next question
     const handleNextQuestion = async () => {
-        if (!session || !session.questions) return;
+        if (!session || !session.questions || !sessionId) return;
+
+        if (!Array.isArray(session.questions) || session.questions.length === 0) {
+            toast.error('No questions available. Please start a new session.');
+            router.push('/practice/setup');
+            return;
+        }
 
         const nextIndex = currentQuestionIndex + 1;
 
         if (nextIndex >= session.questions.length) {
-            alert('Practice session completed!');
+            toast.success('You have completed all questions!');
             router.push('/dashboard');
             return;
         }
 
+        const cleanQuestions = session.questions.map(q => {
+            const cleanQuestion: any = {
+                id: q.id || `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                text: q.text || 'Interview question',
+                category: q.category || 'Behavioral',
+                jobSpecific: q.jobSpecific ?? false
+            };
+
+            if (q.jobId) {
+                cleanQuestion.jobId = q.jobId;
+            }
+
+            return cleanQuestion;
+        });
+
         try {
-            await updatePracticeSession(sessionId, session.questions, nextIndex);
+            const sessionRef = doc(db, 'practice_sessions', sessionId);
+            await updateDoc(sessionRef, {
+                questions: cleanQuestions,
+                currentQuestionIndex: nextIndex,
+                updatedAt: serverTimestamp()
+            });
 
             setCurrentQuestionIndex(nextIndex);
             setCurrentQuestion(session.questions[nextIndex]);
@@ -211,6 +315,7 @@ export default function PracticeSession() {
             setSavedAnswer(false);
         } catch (error) {
             console.error('Error updating session:', error);
+            toast.error('Failed to move to next question. Please try again.');
         }
     };
 
@@ -223,6 +328,14 @@ export default function PracticeSession() {
                 return [...prev, tag];
             }
         });
+    };
+
+    // Add custom tag
+    const handleAddCustomTag = (tag: string) => {
+        const trimmedTag = tag.trim();
+        if (trimmedTag && !selectedTags.includes(trimmedTag)) {
+            setSelectedTags(prevTags => [...prevTags, trimmedTag]);
+        }
     };
 
     const getCategoryBadgeColor = (category: QuestionCategory) => {
@@ -240,7 +353,7 @@ export default function PracticeSession() {
         }
     };
 
-    if (loading) {
+    if (loading && !session) {
         return (
             <PrivateRoute>
                 <ProfileCheck>
@@ -256,11 +369,21 @@ export default function PracticeSession() {
         return (
             <PrivateRoute>
                 <ProfileCheck>
-                    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mb-4 mx-auto"></div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Generating questions...</h2>
-                            <p className="text-gray-300">Please wait while we create personalized interview questions for you.</p>
+                    <div className="min-h-screen bg-gray-700">
+                        {/* Header for generating questions state */}
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                            <div className="max-w-4xl mx-auto text-center">
+                                <h1 className="text-2xl font-bold text-white mb-2">Generating Questions</h1>
+                                <p className="text-gray-400">Creating personalized interview questions for you...</p>
+                            </div>
+                        </div>
+
+                        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mb-4"></div>
+                            <h2 className="text-xl font-semibold text-white mb-2">Generating personalized questions...</h2>
+                            <p className="text-gray-300 text-center max-w-md">
+                                Our AI is analyzing your profile {job && 'and job requirements'} to create relevant interview questions.
+                            </p>
                         </div>
                     </div>
                 </ProfileCheck>
@@ -268,19 +391,50 @@ export default function PracticeSession() {
         );
     }
 
-    if (!currentQuestion) {
+    const hasQuestions = session?.questions && Array.isArray(session.questions) && session.questions.length > 0;
+
+    if (!hasQuestions && !generatingQuestions) {
         return (
             <PrivateRoute>
                 <ProfileCheck>
-                    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
-                        <div className="text-center">
-                            <h2 className="text-xl font-semibold text-white mb-4">No questions available</h2>
-                            <button
-                                onClick={() => router.push('/practice/setup')}
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            >
-                                Start New Session
-                            </button>
+                    <div className="min-h-screen bg-gray-700">
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                            <div className="max-w-4xl mx-auto text-center">
+                                <h1 className="text-2xl font-bold text-red-400 mb-4">No questions available</h1>
+                                <p className="mb-4 text-gray-300">We couldn't load any questions for this session.</p>
+                                <button
+                                    onClick={() => router.push('/practice/setup')}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                >
+                                    Start a New Session
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ProfileCheck>
+            </PrivateRoute>
+        );
+    }
+
+    const displayQuestion = currentQuestion || (hasQuestions ?
+        session.questions[Math.min(currentQuestionIndex, session.questions.length - 1)] : null);
+
+    if (!displayQuestion) {
+        return (
+            <PrivateRoute>
+                <ProfileCheck>
+                    <div className="min-h-screen bg-gray-700">
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                            <div className="max-w-4xl mx-auto text-center">
+                                <h1 className="text-2xl font-bold text-red-400 mb-4">Error loading question</h1>
+                                <p className="mb-4 text-gray-300">There was a problem loading the question. Please try again.</p>
+                                <button
+                                    onClick={() => router.push('/practice/setup')}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                >
+                                    Start a New Session
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </ProfileCheck>
@@ -291,148 +445,227 @@ export default function PracticeSession() {
     return (
         <PrivateRoute>
             <ProfileCheck>
-                <div className="min-h-screen bg-gray-700 p-8">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h1 className="text-3xl font-bold text-white">Practice Session</h1>
-                                {session && (
-                                    <p className="text-gray-400">
-                                        Question {currentQuestionIndex + 1} of {session.questions.length}
-                                    </p>
-                                )}
-                                {job && (
-                                    <p className="text-sm text-blue-400">
-                                        Preparing for: {job.title} at {job.company}
-                                    </p>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => router.push('/dashboard')}
-                                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-                            >
-                                Exit Session
-                            </button>
-                        </div>
-
-                        <div className="bg-gray-800 p-8 rounded-lg border border-gray-600">
-                            {/* Question */}
-                            <div className="mb-6">
-                                <div className="mb-4">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeColor(currentQuestion.category)}`}>
-                                        {currentQuestion.category}
-                                    </span>
+                <div className="min-h-screen bg-gray-700">
+                    {/* Header */}
+                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                <div className="mb-4 sm:mb-0">
+                                    <h1 className="text-2xl font-bold text-white">Practice Session</h1>
+                                    {hasQuestions && (
+                                        <p className="mt-1 text-gray-400">
+                                            Question {currentQuestionIndex + 1} of {session.questions.length}
+                                        </p>
+                                    )}
+                                    {job && (
+                                        <p className="text-sm text-gray-400">
+                                            Preparing for: <span className="text-blue-400">{job.title}</span> at <span className="text-blue-400">{job.company}</span>
+                                        </p>
+                                    )}
                                 </div>
-                                <h2 className="text-xl font-medium text-white mb-6">{currentQuestion.text}</h2>
-                            </div>
-
-                            {/* Answer Input */}
-                            <div className="mb-6">
-                                <label className="block text-white text-sm font-bold mb-2">
-                                    Your Answer
-                                </label>
-                                <textarea
-                                    value={userAnswer}
-                                    onChange={(e) => setUserAnswer(e.target.value)}
-                                    rows={8}
-                                    disabled={savedAnswer}
-                                    className="w-full p-3 border rounded bg-gray-700 text-white border-gray-600 resize-none disabled:opacity-50"
-                                    placeholder="Type your answer here..."
-                                />
-                            </div>
-
-                            {/* Get Feedback Button */}
-                            {!feedback && (
-                                <div className="mb-6 flex justify-end">
+                                <div className="flex space-x-3">
                                     <button
-                                        onClick={requestFeedback}
-                                        disabled={!userAnswer.trim() || gettingFeedback || savedAnswer}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                                    >
-                                        {gettingFeedback ? 'Getting Feedback...' : 'Get AI Feedback'}
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Feedback Display */}
-                            {feedback && (
-                                <div className="mb-6 bg-blue-900/20 border border-blue-600/30 p-4 rounded">
-                                    <h3 className="text-lg font-medium text-blue-200 mb-2">AI Feedback</h3>
-                                    <p className="text-sm text-blue-100 whitespace-pre-line">{feedback}</p>
-                                </div>
-                            )}
-
-                            {/* Tags */}
-                            {feedback && !savedAnswer && (
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-medium text-white mb-2">Tags</h3>
-                                    <div className="flex flex-wrap gap-2 mb-4">
-                                        {suggestedTags.map((tag) => (
-                                            <button
-                                                key={tag}
-                                                onClick={() => handleTagToggle(tag)}
-                                                className={`px-2 py-1 rounded text-xs font-medium ${selectedTags.includes(tag)
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                                                    }`}
-                                            >
-                                                {tag}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex justify-end space-x-3">
-                                        <button
-                                            onClick={() => {
-                                                setUserAnswer('');
-                                                setFeedback('');
-                                                setSuggestedTags([]);
-                                                setSelectedTags([]);
-                                            }}
-                                            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-                                        >
-                                            Revise Answer
-                                        </button>
-                                        <button
-                                            onClick={saveCurrentAnswer}
-                                            disabled={loading}
-                                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-                                        >
-                                            {loading ? 'Saving...' : 'Save Answer'}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Navigation */}
-                            {savedAnswer && (
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={handleNextQuestion}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-                                    >
-                                        {currentQuestionIndex + 1 >= (session?.questions?.length || 0) ? 'Complete Session' : 'Next Question'}
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Skip Question Option */}
-                            {!savedAnswer && (
-                                <div className="flex justify-between">
-                                    <button
-                                        onClick={() => router.push('/dashboard')}
+                                        onClick={() => {
+                                            if (window.confirm('Are you sure you want to exit? Your progress on this question will be lost if not saved.')) {
+                                                router.push('/dashboard');
+                                            }
+                                        }}
                                         className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
                                     >
                                         Exit Session
                                     </button>
-
-                                    <button
-                                        onClick={handleNextQuestion}
-                                        className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
-                                    >
-                                        Skip Question
-                                    </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {/* Question Card */}
+                        <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg mb-6">
+                            <div className="px-6 py-5">
+                                <div className="flex items-center mb-4">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeColor(displayQuestion.category)}`}>
+                                        {displayQuestion.category}
+                                    </span>
+                                </div>
+
+                                <h2 className="text-xl font-medium text-white mb-6">{displayQuestion.text}</h2>
+
+                                <div className="mb-4">
+                                    <label htmlFor="answer" className="block text-sm font-medium text-gray-300 mb-2">
+                                        Your Answer
+                                    </label>
+                                    <textarea
+                                        id="answer"
+                                        name="answer"
+                                        rows={8}
+                                        value={userAnswer}
+                                        onChange={(e) => setUserAnswer(e.target.value)}
+                                        disabled={savedAnswer}
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 resize-none"
+                                        placeholder="Type your answer here..."
+                                    />
+                                </div>
+
+                                {!feedback && (
+                                    <div className="flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={requestFeedback}
+                                            disabled={!userAnswer.trim() || gettingFeedback || savedAnswer}
+                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                        >
+                                            {gettingFeedback ? 'Getting Feedback...' : 'Get AI Feedback'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {feedback && (
+                                    <div className="mt-6 bg-blue-900/20 border border-blue-600/30 p-4 rounded-md">
+                                        <h3 className="text-lg font-medium text-blue-200 mb-2">AI Feedback</h3>
+                                        <div className="text-sm text-blue-100 whitespace-pre-line">
+                                            {feedback}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {feedback && !savedAnswer && (
+                                    <div className="mt-6">
+                                        <h3 className="text-sm font-medium text-gray-300 mb-2">Tags</h3>
+                                        <div className="flex flex-wrap gap-2 mb-4">
+                                            {suggestedTags.map((tag) => (
+                                                <button
+                                                    key={tag}
+                                                    type="button"
+                                                    onClick={() => handleTagToggle(tag)}
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedTags.includes(tag)
+                                                            ? 'bg-blue-900/20 text-blue-300 border border-blue-600/30'
+                                                            : 'bg-gray-700 text-gray-300 border border-gray-600'
+                                                        }`}
+                                                >
+                                                    {tag}
+                                                    {selectedTags.includes(tag) ? (
+                                                        <svg className="ml-1.5 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="ml-1.5 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                            ))}
+
+                                            {selectedTags
+                                                .filter(tag => !suggestedTags.includes(tag))
+                                                .map((tag) => (
+                                                    <button
+                                                        key={tag}
+                                                        type="button"
+                                                        onClick={() => handleTagToggle(tag)}
+                                                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/20 text-blue-300 border border-blue-600/30"
+                                                    >
+                                                        {tag}
+                                                        <svg className="ml-1.5 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                ))}
+
+                                            <div className="inline-flex items-center">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Add custom tag"
+                                                    value={customTagInput}
+                                                    onChange={(e) => setCustomTagInput(e.target.value)}
+                                                    className="border border-gray-600 rounded-l-md text-xs py-0.5 px-2 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500"
+                                                    onKeyPress={(e) => {
+                                                        if (e.key === 'Enter' && customTagInput.trim()) {
+                                                            handleAddCustomTag(customTagInput);
+                                                            setCustomTagInput('');
+                                                        }
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (customTagInput.trim()) {
+                                                            handleAddCustomTag(customTagInput);
+                                                            setCustomTagInput('');
+                                                        }
+                                                    }}
+                                                    className="inline-flex items-center px-2 py-0.5 rounded-r-md border border-l-0 border-gray-600 bg-gray-600 text-xs font-medium text-gray-300 hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                >
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-xs text-gray-400 mb-4">
+                                            Selected tags: {selectedTags.length} {selectedTags.length > 0 && `(${selectedTags.join(', ')})`}
+                                        </p>
+
+                                        <div className="flex justify-end space-x-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setUserAnswer('');
+                                                    setFeedback('');
+                                                    setSuggestedTags([]);
+                                                    setSelectedTags([]);
+                                                }}
+                                                className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                            >
+                                                Revise Answer
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={saveCurrentAnswer}
+                                                disabled={loading}
+                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                            >
+                                                {loading ? 'Saving...' : 'Save Answer'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {savedAnswer && (
+                                    <div className="mt-6 flex justify-end space-x-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleNextQuestion}
+                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                        >
+                                            {currentQuestionIndex + 1 >= (session?.questions?.length || 0) ? 'Complete Session' : 'Next Question'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Navigation */}
+                        <div className="flex justify-between">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (window.confirm('Are you sure you want to exit? Your progress on this question will be lost if not saved.')) {
+                                        router.push('/dashboard');
+                                    }
+                                }}
+                                className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                Exit Session
+                            </button>
+
+                            {!savedAnswer && (
+                                <button
+                                    type="button"
+                                    onClick={handleNextQuestion}
+                                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    Skip Question
+                                </button>
                             )}
                         </div>
                     </div>
