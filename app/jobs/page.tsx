@@ -5,23 +5,29 @@ import Link from 'next/link';
 import { useAuth } from '../ui/Context/AuthContext';
 import { getJobs } from '../Services/firebase/firestore';
 import { Job, JobStatus } from '../types';
+import toast from 'react-hot-toast';
 import PrivateRoute from '../ui/components/PrivateRoute';
 import ProfileCheck from '../ui/components/ProfileCheck';
+import { getCardClasses, getButtonClasses } from '../ui/styles/theme';
+import JobItem from '../ui/components/jobs/JobItem';
 
 export default function JobTracker() {
     const { currentUser } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<JobStatus | 'All'>('All');
 
     useEffect(() => {
         const fetchJobs = async () => {
             if (!currentUser) return;
 
             try {
+                setLoading(true);
                 const userJobs = await getJobs(currentUser.uid);
                 setJobs(userJobs);
             } catch (error) {
                 console.error('Error fetching jobs:', error);
+                toast.error('Failed to load your jobs. Please try again.');
             } finally {
                 setLoading(false);
             }
@@ -30,24 +36,29 @@ export default function JobTracker() {
         fetchJobs();
     }, [currentUser]);
 
-    const getStatusColor = (status: JobStatus) => {
-        switch (status) {
-            case 'Drafted':
-                return 'bg-blue-100 text-blue-800';
-            case 'Submitted':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'Interviewing':
-                return 'bg-purple-100 text-purple-800';
-            case 'Offer':
-                return 'bg-green-100 text-green-800';
-            case 'Rejected':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
+    // Handle job status updates from JobItem component
+    const handleJobUpdate = (jobId: string, newStatus: JobStatus) => {
+        setJobs(prevJobs =>
+            prevJobs.map(job =>
+                job.id === jobId
+                    ? { ...job, status: newStatus, updatedAt: new Date() }
+                    : job
+            )
+        );
     };
 
-    if (loading) {
+    const filteredJobs = filter === 'All'
+        ? jobs
+        : jobs.filter(job => job.status === filter);
+
+    const jobStatusCounts = jobs.reduce((counts, job) => {
+        counts[job.status] = (counts[job.status] || 0) + 1;
+        return counts;
+    }, {} as Record<JobStatus, number>);
+
+    const totalJobs = jobs.length;
+
+    if (loading && jobs.length === 0) {
         return (
             <PrivateRoute>
                 <ProfileCheck>
@@ -62,62 +73,171 @@ export default function JobTracker() {
     return (
         <PrivateRoute>
             <ProfileCheck>
-                <div className="min-h-screen bg-gray-700 p-8">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-3xl font-bold text-white">Job Tracker</h1>
-                            <Link
-                                href="/jobs/new"
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            >
-                                Add New Job
-                            </Link>
-                        </div>
-
-                        {jobs.length === 0 ? (
-                            <div className="bg-gray-800 p-8 rounded-lg text-center">
-                                <h2 className="text-xl font-semibold text-white mb-4">No jobs tracked yet</h2>
-                                <p className="text-gray-300 mb-6">Start tracking your job applications to stay organized!</p>
-                                <Link
-                                    href="/jobs/new"
-                                    className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
-                                >
-                                    Add Your First Job
-                                </Link>
+                <div className="min-h-screen bg-gray-700">
+                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                <div className="mb-4 sm:mb-0">
+                                    <h1 className="text-2xl font-bold text-white">Job Tracker</h1>
+                                    <p className="mt-1 text-gray-400">
+                                        Manage your job applications and track your progress ({totalJobs} total)
+                                    </p>
+                                    <p className="mt-1 text-sm text-blue-400">
+                                        💡 Tip: Click on the status badge to quickly update your application status
+                                    </p>
+                                </div>
+                                <div className="flex space-x-3">
+                                    <Link
+                                        href="/jobs/new"
+                                        className={`${getButtonClasses('primary')} transform transition-all hover:scale-105`}
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        Add New Job
+                                    </Link>
+                                </div>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {jobs.map((job) => (
-                                    <div key={job.id} className="bg-gray-800 border border-gray-600 rounded-lg p-6">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                                                <p className="text-gray-300">{job.company}</p>
-                                            </div>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(job.status)}`}>
-                                                {job.status}
-                                            </span>
-                                        </div>
+                        </div>
+                    </div>
 
-                                        {job.description && (
-                                            <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                                                {job.description}
-                                            </p>
-                                        )}
-
-                                        <div className="text-xs text-gray-500">
-                                            Added: {job.createdAt.toLocaleDateString()}
-                                        </div>
-
-                                        <div className="mt-4 flex space-x-2">
-                                            <Link
-                                                href={`/jobs/${job.id}`}
-                                                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                                            >
-                                                View Details
-                                            </Link>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {/* Stats */}
+                        <div className={`${getCardClasses()} mb-6`}>
+                            <div className="px-4 py-5 sm:p-6">
+                                <h2 className="text-lg font-medium text-white mb-4">Job Application Overview</h2>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    <div className="bg-gray-600 border border-gray-500 overflow-hidden shadow rounded-lg hover:border-gray-400 transition-all duration-200">
+                                        <div className="px-4 py-5 sm:p-6">
+                                            <dt className="text-sm font-medium text-gray-300 truncate">Total Jobs</dt>
+                                            <dd className="mt-1 text-3xl font-semibold text-white">{totalJobs}</dd>
                                         </div>
                                     </div>
+                                    <div className="bg-blue-900/20 border border-blue-600/30 overflow-hidden shadow rounded-lg hover:border-blue-600/50 transition-all duration-200">
+                                        <div className="px-4 py-5 sm:p-6">
+                                            <dt className="text-sm font-medium text-blue-200 truncate">Drafted</dt>
+                                            <dd className="mt-1 text-3xl font-semibold text-white">{jobStatusCounts.Drafted || 0}</dd>
+                                        </div>
+                                    </div>
+                                    <div className="bg-yellow-900/20 border border-yellow-600/30 overflow-hidden shadow rounded-lg hover:border-yellow-600/50 transition-all duration-200">
+                                        <div className="px-4 py-5 sm:p-6">
+                                            <dt className="text-sm font-medium text-yellow-200 truncate">Submitted</dt>
+                                            <dd className="mt-1 text-3xl font-semibold text-white">{jobStatusCounts.Submitted || 0}</dd>
+                                        </div>
+                                    </div>
+                                    <div className="bg-purple-900/20 border border-purple-600/30 overflow-hidden shadow rounded-lg hover:border-purple-600/50 transition-all duration-200">
+                                        <div className="px-4 py-5 sm:p-6">
+                                            <dt className="text-sm font-medium text-purple-200 truncate">Interviewing</dt>
+                                            <dd className="mt-1 text-3xl font-semibold text-white">{jobStatusCounts.Interviewing || 0}</dd>
+                                        </div>
+                                    </div>
+                                    <div className="bg-green-900/20 border border-green-600/30 overflow-hidden shadow rounded-lg hover:border-green-600/50 transition-all duration-200">
+                                        <div className="px-4 py-5 sm:p-6">
+                                            <dt className="text-sm font-medium text-green-200 truncate">Offers</dt>
+                                            <dd className="mt-1 text-3xl font-semibold text-white">{jobStatusCounts.Offer || 0}</dd>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Filter */}
+                        <div className={`${getCardClasses()} mb-6`}>
+                            <div className="px-4 py-5 sm:p-6">
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setFilter('All')}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'All'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        All Jobs ({totalJobs})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilter('Drafted')}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'Drafted'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        Drafted ({jobStatusCounts.Drafted || 0})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilter('Submitted')}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'Submitted'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        Submitted ({jobStatusCounts.Submitted || 0})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilter('Interviewing')}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'Interviewing'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        Interviewing ({jobStatusCounts.Interviewing || 0})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilter('Offer')}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'Offer'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        Offers ({jobStatusCounts.Offer || 0})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilter('Rejected')}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'Rejected'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-gray-300 hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        Rejected ({jobStatusCounts.Rejected || 0})
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Job list */}
+                        {filteredJobs.length === 0 ? (
+                            <div className={`${getCardClasses()} p-6 text-center`}>
+                                <div className="w-16 h-16 mx-auto mb-4 bg-gray-600 rounded-full flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-medium text-white mb-2">No jobs found</h3>
+                                {jobs.length > 0 ? (
+                                    <p className="text-gray-400 mb-4">
+                                        No jobs match your current filter. Try selecting a different status filter.
+                                    </p>
+                                ) : (
+                                    <div>
+                                        <p className="text-gray-400 mb-4">
+                                            You haven't added any jobs yet. Start tracking your job applications to get organized!
+                                        </p>
+                                        <Link
+                                            href="/jobs/new"
+                                            className={getButtonClasses('primary')}
+                                        >
+                                            Add Your First Job
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                {filteredJobs.map((job) => (
+                                    <JobItem
+                                        key={job.id}
+                                        job={job}
+                                        onJobUpdate={handleJobUpdate}
+                                    />
                                 ))}
                             </div>
                         )}
