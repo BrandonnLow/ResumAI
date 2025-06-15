@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Job, JobStatus } from '../../../types';
 import { updateJobStatus } from '../../../Services/firebase/firestore';
+import toast from 'react-hot-toast';
 
 interface JobItemProps {
     job: Job;
@@ -17,17 +18,17 @@ export default function JobItem({ job, onJobUpdate }: JobItemProps) {
     const getStatusColor = (status: JobStatus) => {
         switch (status) {
             case 'Drafted':
-                return 'bg-blue-100 text-blue-800';
+                return 'bg-blue-100 text-blue-800 border border-blue-200';
             case 'Submitted':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
             case 'Interviewing':
-                return 'bg-purple-100 text-purple-800';
+                return 'bg-purple-100 text-purple-800 border border-purple-200';
             case 'Offer':
-                return 'bg-green-100 text-green-800';
+                return 'bg-green-100 text-green-800 border border-green-200';
             case 'Rejected':
-                return 'bg-red-100 text-red-800';
+                return 'bg-red-100 text-red-800 border border-red-200';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-100 text-gray-800 border border-gray-200';
         }
     };
 
@@ -36,13 +37,16 @@ export default function JobItem({ job, onJobUpdate }: JobItemProps) {
         if (newStatus === currentStatus) return;
 
         setIsUpdatingStatus(true);
+        const loadingToast = toast.loading('Updating status...');
 
         try {
             await updateJobStatus(job.id, newStatus);
             setCurrentStatus(newStatus);
             onJobUpdate(job.id, newStatus);
+            toast.success(`Status updated to ${newStatus}`, { id: loadingToast });
         } catch (error) {
             console.error('Error updating job status:', error);
+            toast.error('Failed to update status', { id: loadingToast });
             e.target.value = currentStatus;
         } finally {
             setIsUpdatingStatus(false);
@@ -82,19 +86,32 @@ export default function JobItem({ job, onJobUpdate }: JobItemProps) {
             <div className="mt-3">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-500">Status:</span>
-                    <select
-                        value={currentStatus}
-                        onChange={handleStatusChange}
-                        disabled={isUpdatingStatus}
-                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${getStatusColor(currentStatus)} ${isUpdatingStatus ? 'opacity-50' : 'hover:opacity-80'
-                            }`}
-                    >
-                        <option value="Drafted">Drafted</option>
-                        <option value="Submitted">Submitted</option>
-                        <option value="Interviewing">Interviewing</option>
-                        <option value="Offer">Offer</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
+                    <div className="relative">
+                        <select
+                            value={currentStatus}
+                            onChange={handleStatusChange}
+                            disabled={isUpdatingStatus}
+                            className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${getStatusColor(currentStatus)} ${isUpdatingStatus ? 'opacity-50' : 'hover:opacity-80'
+                                } appearance-none pr-8`}
+                        >
+                            <option value="Drafted">Drafted</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Interviewing">Interviewing</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                        {isUpdatingStatus ? (
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-current"></div>
+                            </div>
+                        ) : (
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 8l4 4 4-4" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="text-sm text-gray-500 mb-2">
