@@ -26,14 +26,18 @@ export default function Dashboard() {
     const fetchingRef = useRef(false);
     const mountedRef = useRef(true);
 
+    // Cleanup on unmount
     useEffect(() => {
         return () => {
             mountedRef.current = false;
         };
     }, []);
 
+    // Memoized fetch function to prevent recreation on every render
     const fetchDashboardData = useCallback(async () => {
+        // Prevent multiple simultaneous fetches
         if (!currentUser || fetchingRef.current) {
+            console.log('Skipping fetch - no user or already fetching');
             return;
         }
 
@@ -44,6 +48,7 @@ export default function Dashboard() {
 
             console.log('Starting dashboard data fetch for user:', currentUser.uid);
 
+            // Fetch all data in parallel
             const [userProfile, userAnswers, userJobs] = await Promise.all([
                 getUserProfile(currentUser.uid),
                 getAnswers(currentUser.uid),
@@ -57,6 +62,7 @@ export default function Dashboard() {
                 jobsCount: userJobs.length
             });
 
+            // Handle profile
             if (!userProfile) {
                 console.error('No profile found for user:', currentUser.uid);
                 setProfileError('Profile not found');
@@ -67,8 +73,11 @@ export default function Dashboard() {
                 }
             }
 
+            // Set answers
             setAllAnswers(userAnswers);
             setRecentAnswers(userAnswers.slice(0, 5));
+
+            // Set jobs
             setJobs(userJobs);
 
             // Check for welcome message
@@ -91,6 +100,7 @@ export default function Dashboard() {
         }
     }, [currentUser, profileComplete]);
 
+    // Main data fetching effect
     useEffect(() => {
         if (currentUser && mountedRef.current) {
             console.log('useEffect triggered for dashboard data fetch');
@@ -98,22 +108,25 @@ export default function Dashboard() {
         }
     }, [currentUser, fetchDashboardData]);
 
+    // Fallback
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (loading && !fetchingRef.current) {
-                console.log('Fallback: Setting loading to false after timeout');
+                console.log('Fallback');
                 setLoading(false);
             }
-        }, 10000);
+        }, 10000); // 10 second timeout
 
         return () => clearTimeout(timeout);
     }, [loading]);
 
+    // Get job name by ID
     const getJobName = (jobId: string) => {
         const job = jobs.find(j => j.id === jobId);
         return job ? `${job.title} at ${job.company}` : 'Unknown Job';
     };
 
+    // Get category badge color
     const getCategoryBadgeColor = (category: string) => {
         switch (category) {
             case 'Motivational':
@@ -171,6 +184,7 @@ export default function Dashboard() {
         }
     };
 
+    // Get display name with fallbacks
     const getDisplayName = () => {
         if (profile?.name && profile.name.trim() !== '') {
             return profile.name;
@@ -181,6 +195,44 @@ export default function Dashboard() {
         return 'User';
     };
 
+    // Debug component - only show if there's actually an issue
+    const DebugBanner = () => {
+        const hasDataIssue = !profile && !profileError && allAnswers.length === 0 && jobs.length === 0;
+
+        if (!hasDataIssue) return null;
+
+        return (
+            <div className="mb-6 bg-red-900/20 border border-red-600/30 rounded-lg p-4">
+                <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div className="ml-3 flex-1">
+                        <h3 className="text-sm font-medium text-red-200">Data Loading Issue Detected</h3>
+                        <div className="mt-2 text-sm text-red-300">
+                            <p>No data was loaded. This might be a temporary issue.</p>
+                            <p className="mt-1">Current User ID: <code className="bg-red-800/30 px-1 rounded">{currentUser?.uid}</code></p>
+                        </div>
+                        <div className="mt-3">
+                            <button
+                                onClick={() => {
+                                    setLoading(true);
+                                    fetchDashboardData();
+                                }}
+                                className="inline-flex items-center px-3 py-2 border border-red-600 text-sm font-medium rounded-md text-red-200 hover:bg-red-900/20"
+                            >
+                                Retry Loading Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Welcome banner for first-time users
     const WelcomeBanner = () => {
         if (!showWelcome) return null;
 
@@ -196,7 +248,7 @@ export default function Dashboard() {
                     </div>
                     <div className="ml-4 flex-1">
                         <h3 className="text-lg font-medium text-white">
-                            🎉 Welcome to PersonaPrep, {getDisplayName()}!
+                            🎉 Welcome to resuMate, {getDisplayName()}!
                         </h3>
                         <p className="mt-2 text-blue-200">
                             Your profile is complete! Now you can start practicing with personalized interview questions,
@@ -232,11 +284,41 @@ export default function Dashboard() {
         );
     };
 
+    // Profile error banner
+    const ProfileErrorBanner = () => {
+        if (!profileError) return null;
+
+        return (
+            <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
+                <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div className="ml-3 flex-1">
+                        <h3 className="text-sm font-medium text-yellow-200">Profile Issue Detected</h3>
+                        <div className="mt-2 text-sm text-yellow-300">
+                            <p>{profileError}. This may affect your experience.</p>
+                        </div>
+                        <div className="mt-3">
+                            <button
+                                onClick={() => router.push('/profile/setup')}
+                                className="inline-flex items-center px-3 py-2 border border-yellow-600 text-sm font-medium rounded-md text-yellow-200 hover:bg-yellow-900/20"
+                            >
+                                Complete Profile Setup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <PrivateRoute>
             <ProfileCheck>
                 <div className="min-h-screen bg-gray-700">
-                    {/* Header */}
                     <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
                         <div className="max-w-7xl mx-auto">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -246,7 +328,7 @@ export default function Dashboard() {
                                     </h1>
                                     <p className="mt-1 text-gray-400">Your interview preparation dashboard</p>
                                     {profileError && (
-                                        <p className="mt-1 text-sm text-yellow-400">⚠️ Profile needs attention</p>
+                                        <p className="mt-1 text-sm text-yellow-400">Profile needs attention</p>
                                     )}
                                 </div>
                                 <div className="flex space-x-3">
@@ -265,7 +347,14 @@ export default function Dashboard() {
                     </div>
 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {/* Debug Banner */}
+                        <DebugBanner />
+
+                        {/* Welcome Banner */}
                         <WelcomeBanner />
+
+                        {/* Profile Error Banner */}
+                        <ProfileErrorBanner />
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {/* Quick actions card */}
@@ -307,7 +396,7 @@ export default function Dashboard() {
                                         className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300"
                                     >
                                         View all
-                                        <svg className="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg className="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                         </svg>
                                     </button>
@@ -363,7 +452,7 @@ export default function Dashboard() {
                                         className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300"
                                     >
                                         View all
-                                        <svg className="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg className="ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                         </svg>
                                     </button>
@@ -414,7 +503,8 @@ export default function Dashboard() {
                                                                     }
                                                                     ${updatingJobId === job.id ? 'opacity-50' : 'hover:opacity-80'}
                                                                     focus:outline-none focus:ring-2 focus:ring-blue-500
-                                                                    appearance-none pr-6 disabled:cursor-not-allowed
+                                                                    appearance-none -webkit-appearance-none -moz-appearance-none
+                                                                    pr-6 disabled:cursor-not-allowed
                                                                 `}
                                                                 style={{
                                                                     backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
