@@ -9,6 +9,7 @@ import { Job, JobStatus, Answer } from '../../types';
 import toast from 'react-hot-toast';
 import PrivateRoute from '../../ui/components/PrivateRoute';
 import ProfileCheck from '../../ui/components/ProfileCheck';
+import { getCardClasses, getInputClasses, getButtonClasses } from '../../ui/styles/theme';
 
 export default function JobDetail() {
     const params = useParams();
@@ -140,7 +141,7 @@ export default function JobDetail() {
                                 <p className="mb-4 text-gray-300">The job you're looking for doesn't exist or you don't have access to it.</p>
                                 <Link
                                     href="/jobs"
-                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className={getButtonClasses('primary')}
                                 >
                                     Back to Jobs
                                 </Link>
@@ -179,7 +180,7 @@ export default function JobDetail() {
                                         <button
                                             type="button"
                                             onClick={() => setEditing(true)}
-                                            className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                            className={getButtonClasses('secondary')}
                                         >
                                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -189,7 +190,7 @@ export default function JobDetail() {
                                         <button
                                             type="button"
                                             onClick={startPracticeSession}
-                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                            className={getButtonClasses('primary')}
                                         >
                                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -204,7 +205,7 @@ export default function JobDetail() {
 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {editing ? (
-                            <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg">
+                            <div className={getCardClasses()}>
                                 <form onSubmit={handleUpdateJob}>
                                     <div className="px-4 py-5 sm:p-6">
                                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-6">
@@ -220,7 +221,7 @@ export default function JobDetail() {
                                                         value={formData.title || ''}
                                                         onChange={handleInputChange}
                                                         required
-                                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                     />
                                                 </div>
                                             </div>
@@ -237,7 +238,7 @@ export default function JobDetail() {
                                                         value={formData.company || ''}
                                                         onChange={handleInputChange}
                                                         required
-                                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                     />
                                                 </div>
                                             </div>
@@ -252,7 +253,7 @@ export default function JobDetail() {
                                                         name="status"
                                                         value={formData.status || 'Drafted'}
                                                         onChange={handleInputChange}
-                                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white appearance-none"
+                                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md appearance-none`}
                                                     >
                                                         <option value="Drafted">Drafted</option>
                                                         <option value="Submitted">Submitted</option>
@@ -260,6 +261,7 @@ export default function JobDetail() {
                                                         <option value="Offer">Offer</option>
                                                         <option value="Rejected">Rejected</option>
                                                     </select>
+
                                                 </div>
                                             </div>
 
@@ -274,7 +276,7 @@ export default function JobDetail() {
                                                         rows={8}
                                                         value={formData.description || ''}
                                                         onChange={handleInputChange}
-                                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                         placeholder="Paste the job description here"
                                                     />
                                                 </div>
@@ -291,7 +293,7 @@ export default function JobDetail() {
                                                         rows={4}
                                                         value={formData.notes || ''}
                                                         onChange={handleInputChange}
-                                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                         placeholder="Add any notes about this job (recruiter info, interview details, etc.)"
                                                     />
                                                 </div>
@@ -302,7 +304,7 @@ export default function JobDetail() {
                                         <button
                                             type="button"
                                             onClick={handleDeleteJob}
-                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                            className={getButtonClasses('danger')}
                                         >
                                             Delete Job
                                         </button>
@@ -310,14 +312,14 @@ export default function JobDetail() {
                                             <button
                                                 type="button"
                                                 onClick={() => setEditing(false)}
-                                                className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                className={getButtonClasses('secondary')}
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 type="submit"
                                                 disabled={loading}
-                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                                className={getButtonClasses('primary')}
                                             >
                                                 {loading ? 'Saving...' : 'Save Changes'}
                                             </button>
@@ -327,17 +329,17 @@ export default function JobDetail() {
                             </div>
                         ) : (
                             <>
-                                <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg mb-6">
+                                <div className={`${getCardClasses()} mb-6`}>
                                     <div className="px-4 py-5 sm:px-6 flex justify-between">
                                         <div>
                                             <h2 className="text-lg font-medium text-white">{job.title}</h2>
                                             <p className="mt-1 max-w-2xl text-sm text-gray-400">{job.company}</p>
                                         </div>
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${job.status === 'Drafted' ? 'bg-blue-100 text-blue-800' :
-                                                job.status === 'Submitted' ? 'bg-yellow-100 text-yellow-800' :
-                                                    job.status === 'Interviewing' ? 'bg-purple-100 text-purple-800' :
-                                                        job.status === 'Offer' ? 'bg-green-100 text-green-800' :
-                                                            'bg-red-100 text-red-800'
+                                            job.status === 'Submitted' ? 'bg-yellow-100 text-yellow-800' :
+                                                job.status === 'Interviewing' ? 'bg-purple-100 text-purple-800' :
+                                                    job.status === 'Offer' ? 'bg-green-100 text-green-800' :
+                                                        'bg-red-100 text-red-800'
                                             }`}>
                                             {job.status}
                                         </span>
@@ -372,7 +374,7 @@ export default function JobDetail() {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg">
+                                <div className={getCardClasses()}>
                                     <div className="px-4 py-5 sm:px-6">
                                         <h2 className="text-lg font-medium text-white">Saved Answers for this Job</h2>
                                         <p className="mt-1 max-w-2xl text-sm text-gray-400">
@@ -393,7 +395,7 @@ export default function JobDetail() {
                                                 <button
                                                     type="button"
                                                     onClick={startPracticeSession}
-                                                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                    className={getButtonClasses('primary')}
                                                 >
                                                     Start Practice Session
                                                 </button>
@@ -404,9 +406,9 @@ export default function JobDetail() {
                                                     <li key={answer.id} className="px-4 py-4 sm:px-6">
                                                         <div className="mb-2">
                                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${answer.category === 'Motivational' ? 'bg-green-100 text-green-800' :
-                                                                    answer.category === 'Behavioral' ? 'bg-blue-100 text-blue-800' :
-                                                                        answer.category === 'Technical' ? 'bg-purple-100 text-purple-800' :
-                                                                            'bg-yellow-100 text-yellow-800'
+                                                                answer.category === 'Behavioral' ? 'bg-blue-100 text-blue-800' :
+                                                                    answer.category === 'Technical' ? 'bg-purple-100 text-purple-800' :
+                                                                        'bg-yellow-100 text-yellow-800'
                                                                 }`}>
                                                                 {answer.category}
                                                             </span>
