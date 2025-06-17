@@ -17,6 +17,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../Services/firebase/config';
 import PrivateRoute from '../../../ui/components/PrivateRoute';
 import ProfileCheck from '../../../ui/components/ProfileCheck';
+import { getCardClasses, getInputClasses, getButtonClasses } from '../../../ui/styles/theme';
 
 export default function PracticeSession() {
     const params = useParams();
@@ -404,7 +405,7 @@ export default function PracticeSession() {
                                 <p className="mb-4 text-gray-300">We couldn't load any questions for this session.</p>
                                 <button
                                     onClick={() => router.push('/practice/setup')}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className={getButtonClasses('primary')}
                                 >
                                     Start a New Session
                                 </button>
@@ -430,7 +431,7 @@ export default function PracticeSession() {
                                 <p className="mb-4 text-gray-300">There was a problem loading the question. Please try again.</p>
                                 <button
                                     onClick={() => router.push('/practice/setup')}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className={getButtonClasses('primary')}
                                 >
                                     Start a New Session
                                 </button>
@@ -470,7 +471,7 @@ export default function PracticeSession() {
                                                 router.push('/dashboard');
                                             }
                                         }}
-                                        className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                                        className={getButtonClasses('secondary')}
                                     >
                                         Exit Session
                                     </button>
@@ -481,8 +482,8 @@ export default function PracticeSession() {
 
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {/* Question Card */}
-                        <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg mb-6">
-                            <div className="px-6 py-5">
+                        <div className={`${getCardClasses()} mb-6`}>
+                            <div className="px-4 py-5 sm:p-6">
                                 <div className="flex items-center mb-4">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeColor(displayQuestion.category)}`}>
                                         {displayQuestion.category}
@@ -502,7 +503,7 @@ export default function PracticeSession() {
                                         value={userAnswer}
                                         onChange={(e) => setUserAnswer(e.target.value)}
                                         disabled={savedAnswer}
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 resize-none"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md resize-none`}
                                         placeholder="Type your answer here..."
                                     />
                                 </div>
@@ -513,7 +514,7 @@ export default function PracticeSession() {
                                             type="button"
                                             onClick={requestFeedback}
                                             disabled={!userAnswer.trim() || gettingFeedback || savedAnswer}
-                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                            className={`${getButtonClasses('primary')} disabled:opacity-50`}
                                         >
                                             {gettingFeedback ? 'Getting Feedback...' : 'Get AI Feedback'}
                                         </button>
@@ -539,8 +540,8 @@ export default function PracticeSession() {
                                                     type="button"
                                                     onClick={() => handleTagToggle(tag)}
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedTags.includes(tag)
-                                                            ? 'bg-blue-900/20 text-blue-300 border border-blue-600/30'
-                                                            : 'bg-gray-700 text-gray-300 border border-gray-600'
+                                                        ? 'bg-blue-900/20 text-blue-300 border border-blue-600/30'
+                                                        : 'bg-gray-700 text-gray-300 border border-gray-600'
                                                         }`}
                                                 >
                                                     {tag}
@@ -614,7 +615,7 @@ export default function PracticeSession() {
                                                     setSuggestedTags([]);
                                                     setSelectedTags([]);
                                                 }}
-                                                className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                className={getButtonClasses('secondary')}
                                             >
                                                 Revise Answer
                                             </button>
@@ -622,7 +623,7 @@ export default function PracticeSession() {
                                                 type="button"
                                                 onClick={saveCurrentAnswer}
                                                 disabled={loading}
-                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                                className={getButtonClasses('primary')}
                                             >
                                                 {loading ? 'Saving...' : 'Save Answer'}
                                             </button>
@@ -635,7 +636,7 @@ export default function PracticeSession() {
                                         <button
                                             type="button"
                                             onClick={handleNextQuestion}
-                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                            className={getButtonClasses('primary')}
                                         >
                                             {currentQuestionIndex + 1 >= (session?.questions?.length || 0) ? 'Complete Session' : 'Next Question'}
                                         </button>
@@ -653,7 +654,7 @@ export default function PracticeSession() {
                                         router.push('/dashboard');
                                     }
                                 }}
-                                className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className={getButtonClasses('secondary')}
                             >
                                 Exit Session
                             </button>
@@ -662,7 +663,7 @@ export default function PracticeSession() {
                                 <button
                                     type="button"
                                     onClick={handleNextQuestion}
-                                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    className={getButtonClasses('primary')}
                                 >
                                     Skip Question
                                 </button>
