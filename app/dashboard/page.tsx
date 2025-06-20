@@ -23,6 +23,7 @@ export default function Dashboard() {
     const [showWelcome, setShowWelcome] = useState(false);
     const [updatingJobId, setUpdatingJobId] = useState<string | null>(null);
 
+    // Track if we're currently fetching to prevent duplicate requests
     const fetchingRef = useRef(false);
     const mountedRef = useRef(true);
 
@@ -94,6 +95,7 @@ export default function Dashboard() {
             setProfileError('Failed to load profile data');
             toast.error('Failed to load dashboard data. Please try again.');
         } finally {
+            // Always set loading to false
             setLoading(false);
             fetchingRef.current = false;
             console.log('Dashboard fetch completed, loading set to false');
@@ -108,11 +110,11 @@ export default function Dashboard() {
         }
     }, [currentUser, fetchDashboardData]);
 
-    // Fallback
+    // Ensure loading doesn't stay true forever
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (loading && !fetchingRef.current) {
-                console.log('Fallback');
+                console.log('Fallback: Setting loading to false after timeout');
                 setLoading(false);
             }
         }, 10000); // 10 second timeout
@@ -184,7 +186,7 @@ export default function Dashboard() {
         }
     };
 
-    // Get display name with fallbacks
+    // Get display name with multiple fallbacks
     const getDisplayName = () => {
         if (profile?.name && profile.name.trim() !== '') {
             return profile.name;
@@ -319,6 +321,7 @@ export default function Dashboard() {
         <PrivateRoute>
             <ProfileCheck>
                 <div className="min-h-screen bg-gray-700">
+                    {/* Header */}
                     <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
                         <div className="max-w-7xl mx-auto">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -328,7 +331,7 @@ export default function Dashboard() {
                                     </h1>
                                     <p className="mt-1 text-gray-400">Your interview preparation dashboard</p>
                                     {profileError && (
-                                        <p className="mt-1 text-sm text-yellow-400">Profile needs attention</p>
+                                        <p className="mt-1 text-sm text-yellow-400">⚠️ Profile needs attention</p>
                                     )}
                                 </div>
                                 <div className="flex space-x-3">

@@ -1,0 +1,104 @@
+'use client'
+
+import React, { useState } from 'react';
+import { Skill } from '../../../../types';
+import { v4 as uuidv4 } from 'uuid';
+
+interface SkillFormProps {
+    skills: Skill[];
+    onAdd: (skill: Skill) => void;
+    onUpdate: (index: number, skill: Skill) => void;
+    onRemove: (index: number) => void;
+}
+
+export default function SkillForm({
+    skills,
+    onAdd,
+    onUpdate,
+    onRemove,
+}: SkillFormProps) {
+    const [formData, setFormData] = useState<Omit<Skill, 'id'>>({
+        name: '',
+        level: 'Intermediate',
+    });
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onAdd({ id: uuidv4(), ...formData });
+        setFormData({
+            name: '',
+            level: 'Intermediate',
+        });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-gray-800 border border-gray-600 shadow rounded-lg divide-y divide-gray-600">
+                <div className="px-4 py-5 sm:px-6">
+                    <h3 className="text-lg leading-6 font-medium text-white">Skills</h3>
+                    <p className="mt-1 text-sm text-gray-400">Add your technical and soft skills.</p>
+                </div>
+                <div className="px-4 py-5 sm:p-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div className="sm:col-span-4">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+                                    Skill Name
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        id="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        placeholder="E.g., JavaScript, Project Management, Data Analysis"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-2">
+                                <label htmlFor="level" className="block text-sm font-medium text-gray-300">
+                                    Proficiency Level
+                                </label>
+                                <div className="mt-1">
+                                    <select
+                                        id="level"
+                                        name="level"
+                                        value={formData.level}
+                                        onChange={handleInputChange}
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white appearance-none"
+                                    >
+                                        <option value="Beginner">Beginner</option>
+                                        <option value="Intermediate">Intermediate</option>
+                                        <option value="Advanced">Advanced</option>
+                                        <option value="Expert">Expert</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                Add Skill
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
