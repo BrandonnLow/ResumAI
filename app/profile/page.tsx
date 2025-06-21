@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../ui/Context/AuthContext';
 import { getUserProfile, updateUserProfile } from '../Services/firebase/firestore';
+import { beautifyProfile } from '../Services/openai/functions';
 import { UserProfile } from '../types';
 import toast from 'react-hot-toast';
 import PrivateRoute from '../ui/components/PrivateRoute';
@@ -16,6 +17,7 @@ export default function Profile() {
     const [formData, setFormData] = useState<Partial<UserProfile>>({});
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [beautifying, setBeautifying] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -71,6 +73,34 @@ export default function Profile() {
             toast.error('Failed to update profile. Please try again.');
         } finally {
             setUpdating(false);
+        }
+    };
+
+    // beautifyProfile function
+    const handleBeautifyProfile = async () => {
+        if (!profile) return;
+
+        try {
+            setBeautifying(true);
+            toast.loading('Enhancing your profile content with AI magic...');
+
+            const enhancedProfile = await beautifyProfile(profile);
+
+            // Update form data with enhanced content
+            setFormData(prev => ({
+                ...prev,
+                ...enhancedProfile
+            }));
+
+            toast.dismiss();
+            toast.success('Profile enhanced successfully! Review and save the changes.', { duration: 3000 });
+
+        } catch (error) {
+            console.error('Error beautifying profile:', error);
+            toast.dismiss();
+            toast.error('Failed to enhance profile. Please try again.');
+        } finally {
+            setBeautifying(false);
         }
     };
 
@@ -197,6 +227,40 @@ export default function Profile() {
                                                     onChange={handleInputChange}
                                                     className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                 />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Beautify Profile Section */}
+                                    <div className="mt-6 bg-blue-900/10 border border-blue-600/30 p-4 rounded-lg">
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-medium text-blue-200 mb-2">
+                                                    ✨ Enhance My Profile with AI
+                                                </h3>
+                                                <p className="text-sm text-blue-300">
+                                                    Transform your profile content with AI-powered enhancements.
+                                                </p>
+                                            </div>
+                                            <div className="mt-4 md:mt-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleBeautifyProfile}
+                                                    disabled={beautifying}
+                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 disabled:opacity-50"
+                                                >
+                                                    {beautifying ? (
+                                                        <>
+                                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            Enhancing...
+                                                        </>
+                                                    ) : (
+                                                        'Enhance with AI'
+                                                    )}
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
