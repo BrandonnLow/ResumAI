@@ -169,6 +169,52 @@ export default function ExtracurricularForm({
                     </form>
                 </div>
             </div>
+
+            {extracurriculars.length > 0 && (
+                <div className="bg-gray-800 border border-gray-600 shadow overflow-hidden sm:rounded-md">
+                    <ul className="divide-y divide-gray-600">
+                        {extracurriculars.map((extracurricular, index) => (
+                            <li key={extracurricular.id}>
+                                <div className="px-4 py-4 sm:px-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center">
+                                                <p className="text-sm font-medium text-blue-400 truncate">
+                                                    {extracurricular.name}
+                                                </p>
+                                                {extracurricular.role && (
+                                                    <p className="ml-2 text-sm text-gray-400">
+                                                        {extracurricular.role}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <p className="mt-2 text-sm text-gray-300">
+                                                {extracurricular.description}
+                                            </p>
+                                            {(extracurricular.startDate || extracurricular.endDate) && (
+                                                <p className="mt-2 text-xs text-gray-400">
+                                                    {extracurricular.startDate && new Date(extracurricular.startDate).toLocaleDateString()}
+                                                    {extracurricular.startDate && extracurricular.endDate && ' - '}
+                                                    {extracurricular.endDate ? new Date(extracurricular.endDate).toLocaleDateString() : 'Present'}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => onRemove(index)}
+                                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 }

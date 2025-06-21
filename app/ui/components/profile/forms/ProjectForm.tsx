@@ -79,6 +79,19 @@ export default function ProjectForm({
         });
     };
 
+    const handleEdit = (index: number) => {
+        const proj = projects[index];
+        setFormData({
+            name: proj.name,
+            description: proj.description.join('\n'),
+            technologiesStr: proj.technologies.join(', '),
+            link: proj.link || '',
+        });
+        setEditIndex(index);
+    };
+
+
+
     return (
         <div className="space-y-6">
             {projects.length > 0 && (
@@ -122,13 +135,23 @@ export default function ProjectForm({
                                             </div>
                                         </div>
                                         <div className="flex space-x-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => onRemove(index)}
-                                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                            >
-                                                Remove
-                                            </button>
+                                            <div className="flex space-x-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleEdit(index)}
+                                                    className="inline-flex items-center px-2.5 py-1.5 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onRemove(index)}
+                                                    className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>

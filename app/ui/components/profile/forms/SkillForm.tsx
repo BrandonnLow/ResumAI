@@ -21,6 +21,7 @@ export default function SkillForm({
         name: '',
         level: 'Intermediate',
     });
+    const [editIndex, setEditIndex] = useState<number | null>(null);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -32,11 +33,23 @@ export default function SkillForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onAdd({ id: uuidv4(), ...formData });
+
+        if (editIndex !== null) {
+            onUpdate(editIndex, { ...skills[editIndex], ...formData });
+            setEditIndex(null);
+        } else {
+            onAdd({ id: uuidv4(), ...formData });
+        }
+
         setFormData({
             name: '',
             level: 'Intermediate',
         });
+    };
+
+    const handleEdit = (index: number) => {
+        setFormData(skills[index]);
+        setEditIndex(index);
     };
 
     return (
@@ -93,7 +106,7 @@ export default function SkillForm({
                                 type="submit"
                                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
-                                Add Skill
+                                {editIndex !== null ? 'Update' : 'Add'} Skill
                             </button>
                         </div>
                     </form>
@@ -115,15 +128,26 @@ export default function SkillForm({
                                         ({skill.level})
                                     </span>
                                 )}
-                                <button
-                                    type="button"
-                                    onClick={() => onRemove(index)}
-                                    className="ml-2 text-red-400 hover:text-red-300"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                                <div className="flex ml-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleEdit(index)}
+                                        className="text-blue-400 hover:text-blue-300 mr-1"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => onRemove(index)}
+                                        className="text-red-400 hover:text-red-300"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
