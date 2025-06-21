@@ -59,7 +59,7 @@ export default function ProfileCheck({ children }: ProfileCheckProps) {
                         {/* Content */}
                         <h2 className="text-2xl font-bold text-white mb-4">Profile Setup Required</h2>
                         <p className="text-gray-300 mb-6 max-w-md mx-auto">
-                            To access the full features of resuMate, please complete your profile setup. This helps us provide personalized interview questions and better feedback.
+                            To access the full features of resumAI, please complete your profile setup. This helps us provide personalized interview questions and better feedback.
                         </p>
 
                         {/* Benefits list */}

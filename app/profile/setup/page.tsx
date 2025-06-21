@@ -393,7 +393,7 @@ export default function ProfileSetup() {
             } else {
                 // Create new profile
                 await createUserProfile(profile as UserProfile);
-                toast.success('Profile created successfully! Welcome to resuMate!');
+                toast.success('Profile created successfully! Welcome to resumAI!');
             }
 
             // Refresh the profile status in auth context
@@ -731,7 +731,7 @@ export default function ProfileSetup() {
                                 <div className="mt-2 text-sm text-yellow-200">
                                     <p>
                                         {isEditMode
-                                            ? 'You are updating your existing profile. Once saved, you\'ll have access to all resuMate features.'
+                                            ? 'You are updating your existing profile. Once saved, you\'ll have access to all resumAI features.'
                                             : 'Once you submit your profile, you\'ll have access to personalized interview questions, AI feedback, and job tracking features.'}
                                     </p>
                                 </div>

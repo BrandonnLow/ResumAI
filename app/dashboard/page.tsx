@@ -250,7 +250,7 @@ export default function Dashboard() {
                     </div>
                     <div className="ml-4 flex-1">
                         <h3 className="text-lg font-medium text-white">
-                            🎉 Welcome to resuMate, {getDisplayName()}!
+                            🎉 Welcome to resumAI, {getDisplayName()}!
                         </h3>
                         <p className="mt-2 text-blue-200">
                             Your profile is complete! Now you can start practicing with personalized interview questions,
