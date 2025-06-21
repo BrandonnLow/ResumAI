@@ -162,27 +162,26 @@ export default function Dashboard() {
     const handleQuickStatusUpdate = async (jobId: string, newStatus: JobStatus) => {
         if (updatingJobId || !currentUser) return;
 
+        console.log('Starting status update for job:', jobId, 'to status:', newStatus);
         setUpdatingJobId(jobId);
 
         try {
             await updateJobStatus(jobId, newStatus);
-            if (mountedRef.current) {
-                setJobs(prevJobs =>
-                    prevJobs.map(job =>
-                        job.id === jobId ? { ...job, status: newStatus } : job
-                    )
-                );
-                toast.success(`Job status updated to "${newStatus}"`);
-            }
+
+            setJobs(prevJobs =>
+                prevJobs.map(job =>
+                    job.id === jobId ? { ...job, status: newStatus } : job
+                )
+            );
+
+            toast.success(`Job status updated to "${newStatus}"`);
+            console.log('Status update successful');
         } catch (error) {
             console.error('Error updating job status:', error);
-            if (mountedRef.current && currentUser) {
-                toast.error('Failed to update job status');
-            }
+            toast.error('Failed to update job status');
         } finally {
-            if (mountedRef.current) {
-                setUpdatingJobId(null);
-            }
+            console.log('Clearing updating job ID');
+            setUpdatingJobId(null);
         }
     };
 
@@ -487,13 +486,14 @@ export default function Dashboard() {
                                                                 <p className="text-sm text-gray-400">{job.company}</p>
                                                             </Link>
                                                         </div>
-                                                        <div className="ml-4 flex-shrink-0 relative" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="ml-4 flex-shrink-0 relative">
                                                             <select
                                                                 value={job.status}
                                                                 onChange={(e) => {
                                                                     e.preventDefault();
                                                                     e.stopPropagation();
-                                                                    handleQuickStatusUpdate(job.id, e.target.value as JobStatus);
+                                                                    const newStatus = e.target.value as JobStatus;
+                                                                    handleQuickStatusUpdate(job.id, newStatus);
                                                                 }}
                                                                 disabled={updatingJobId === job.id}
                                                                 className={`
@@ -504,13 +504,13 @@ export default function Dashboard() {
                                                                                 job.status === 'Offer' ? 'bg-green-100 text-green-800' :
                                                                                     'bg-red-100 text-red-800'
                                                                     }
-                                                                    ${updatingJobId === job.id ? 'opacity-50' : 'hover:opacity-80'}
+                                                                    ${updatingJobId === job.id ? 'opacity-50 cursor-wait' : 'hover:opacity-80'}
                                                                     focus:outline-none focus:ring-2 focus:ring-blue-500
                                                                     appearance-none -webkit-appearance-none -moz-appearance-none
-                                                                    pr-6 disabled:cursor-not-allowed
+                                                                    pr-6 disabled:cursor-wait
                                                                 `}
                                                                 style={{
-                                                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                                                    backgroundImage: updatingJobId === job.id ? 'none' : `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                                                                     backgroundSize: '1em 1em',
                                                                     backgroundPosition: 'right 0.25rem center',
                                                                     backgroundRepeat: 'no-repeat'
