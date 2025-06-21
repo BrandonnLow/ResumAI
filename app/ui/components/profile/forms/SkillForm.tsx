@@ -99,6 +99,36 @@ export default function SkillForm({
                     </form>
                 </div>
             </div>
+
+            {skills.length > 0 && (
+                <div className="mt-6">
+                    <h4 className="text-sm font-medium text-gray-300 mb-3">Your Skills</h4>
+                    <div className="flex flex-wrap gap-2">
+                        {skills.map((skill, index) => (
+                            <div
+                                key={skill.id}
+                                className="inline-flex items-center bg-blue-900/20 border border-blue-600/30 rounded-full px-3 py-1 text-sm font-medium text-blue-300"
+                            >
+                                {skill.name}
+                                {skill.level && (
+                                    <span className="ml-1 text-xs text-blue-400">
+                                        ({skill.level})
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => onRemove(index)}
+                                    className="ml-2 text-red-400 hover:text-red-300"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
