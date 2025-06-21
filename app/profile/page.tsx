@@ -19,6 +19,11 @@ export default function Profile() {
     const [updating, setUpdating] = useState(false);
     const [beautifying, setBeautifying] = useState(false);
 
+    const [originalSummary, setOriginalSummary] = useState<string>('');
+    const [showComparison, setShowComparison] = useState<boolean>(false);
+    const [fieldsChanged, setFieldsChanged] = useState<string[]>([]);
+    const [saveHighlighted, setSaveHighlighted] = useState<boolean>(false);
+
     useEffect(() => {
         const fetchProfile = async () => {
             if (!currentUser) return;
@@ -68,6 +73,11 @@ export default function Profile() {
             setProfile(prev => prev ? { ...prev, ...formData } : null);
             toast.success('Profile updated successfully!');
 
+            // Reset states after successful update
+            setShowComparison(false);
+            setFieldsChanged([]);
+            setSaveHighlighted(false);
+
         } catch (error) {
             console.error('Error updating profile:', error);
             toast.error('Failed to update profile. Please try again.');
@@ -84,7 +94,23 @@ export default function Profile() {
             setBeautifying(true);
             toast.loading('Enhancing your profile content with AI magic...');
 
+            // Store original values for comparison
+            setOriginalSummary(formData.summary || '');
+
+            // Track modified fields
+            const changedFields: string[] = [];
+
             const enhancedProfile = await beautifyProfile(profile);
+
+            // Check what fields were modified
+            Object.keys(enhancedProfile).forEach(key => {
+                if (JSON.stringify(enhancedProfile[key as keyof UserProfile]) !==
+                    JSON.stringify(profile[key as keyof UserProfile])) {
+                    changedFields.push(key);
+                }
+            });
+
+            setFieldsChanged(changedFields);
 
             // Update form data with enhanced content
             setFormData(prev => ({
@@ -93,7 +119,40 @@ export default function Profile() {
             }));
 
             toast.dismiss();
-            toast.success('Profile enhanced successfully! Review and save the changes.', { duration: 3000 });
+
+            // Show specific toast based on what changed
+            if (changedFields.length > 0) {
+                const changedText = changedFields.join(', ');
+                toast.success(
+                    `Profile enhanced! Improvements made to your ${changedText}. Review and save the changes.`,
+                    { duration: 5000 }
+                );
+
+                // Show comparison for summary if it changed
+                if (changedFields.includes('summary')) {
+                    setShowComparison(true);
+                }
+
+                // Highlight save button
+                setSaveHighlighted(true);
+
+                // Apply visual highlight to fields that were changed
+                setTimeout(() => {
+                    changedFields.forEach(field => {
+                        const element = document.getElementById(field);
+                        if (element) {
+                            element.style.borderColor = '#3b82f6';
+                            element.style.backgroundColor = '#1e3a8a';
+                            setTimeout(() => {
+                                element.style.backgroundColor = '';
+                                element.style.transition = 'background-color 1s ease-out';
+                            }, 100);
+                        }
+                    });
+                }, 500);
+            } else {
+                toast.success('Profile looks great already! No significant improvements needed.');
+            }
 
         } catch (error) {
             console.error('Error beautifying profile:', error);
@@ -144,6 +203,7 @@ export default function Profile() {
                                                     onChange={handleInputChange}
                                                     required
                                                     className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
+                                                    style={fieldsChanged.includes('name') ? { borderColor: '#3b82f6' } : {}}
                                                 />
                                             </div>
                                         </div>
@@ -177,6 +237,7 @@ export default function Profile() {
                                                     value={formData.phone || ''}
                                                     onChange={handleInputChange}
                                                     className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
+                                                    style={fieldsChanged.includes('phone') ? { borderColor: '#3b82f6' } : {}}
                                                 />
                                             </div>
                                         </div>
@@ -194,6 +255,7 @@ export default function Profile() {
                                                     onChange={handleInputChange}
                                                     className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                     placeholder="City, State/Province, Country"
+                                                    style={fieldsChanged.includes('location') ? { borderColor: '#3b82f6' } : {}}
                                                 />
                                             </div>
                                         </div>
@@ -210,8 +272,33 @@ export default function Profile() {
                                                     value={formData.summary || ''}
                                                     onChange={handleInputChange}
                                                     className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
+                                                    style={fieldsChanged.includes('summary') ? { borderColor: '#3b82f6' } : {}}
                                                 />
                                             </div>
+
+                                            {/* Before/After Comparison */}
+                                            {showComparison && originalSummary && (
+                                                <div className="mt-3 p-3 bg-gray-700 rounded-md border border-gray-600">
+                                                    <h4 className="text-xs font-medium text-gray-300 mb-2">See what changed:</h4>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div>
+                                                            <p className="text-xs text-gray-400 mb-1">Before:</p>
+                                                            <p className="text-xs text-gray-300 whitespace-pre-line bg-gray-800 p-2 rounded border border-gray-600">{originalSummary}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-gray-400 mb-1">After:</p>
+                                                            <p className="text-xs text-gray-300 whitespace-pre-line bg-gray-800 p-2 rounded border border-blue-600">{formData.summary}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowComparison(false)}
+                                                        className="mt-2 text-xs text-gray-400 hover:text-gray-300"
+                                                    >
+                                                        Close comparison
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="sm:col-span-6">
@@ -226,28 +313,36 @@ export default function Profile() {
                                                     value={formData.additionalInfo || ''}
                                                     onChange={handleInputChange}
                                                     className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
+                                                    style={fieldsChanged.includes('additionalInfo') ? { borderColor: '#3b82f6' } : {}}
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Beautify Profile Section */}
-                                    <div className="mt-6 bg-blue-900/10 border border-blue-600/30 p-4 rounded-lg">
+                                    <div className="mt-6 bg-blue-900/10 border border-blue-600/30 p-5 rounded-lg shadow-sm">
                                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                                             <div className="flex-1">
-                                                <h3 className="text-lg font-medium text-blue-200 mb-2">
-                                                    ✨ Enhance My Profile with AI
+                                                <h3 className="text-lg font-medium text-blue-200 mb-2 flex items-center">
+                                                    <span className="mr-2">✨</span>
+                                                    Enhance My Profile with AI
                                                 </h3>
-                                                <p className="text-sm text-blue-300">
-                                                    Transform your profile content with AI-powered enhancements.
+                                                <p className="text-sm text-blue-300 mb-3">
+                                                    Instantly transform your profile content with our AI enhancement that will:
                                                 </p>
+                                                <ul className="list-disc list-inside text-sm text-blue-300 mb-4 space-y-1">
+                                                    <li>Add powerful action verbs that make your experience stand out</li>
+                                                    <li>Quantify your achievements with specific metrics where possible</li>
+                                                    <li>Restructure content for maximum professional impact</li>
+                                                    <li>Highlight your most relevant skills and accomplishments</li>
+                                                </ul>
                                             </div>
                                             <div className="mt-4 md:mt-0">
                                                 <button
                                                     type="button"
                                                     onClick={handleBeautifyProfile}
                                                     disabled={beautifying}
-                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 disabled:opacity-50"
+                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 disabled:opacity-50 disabled:hover:scale-100"
                                                 >
                                                     {beautifying ? (
                                                         <>
@@ -255,14 +350,36 @@ export default function Profile() {
                                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                             </svg>
-                                                            Enhancing...
+                                                            Enhancing with AI...
                                                         </>
                                                     ) : (
-                                                        'Enhance with AI'
+                                                        'Enhance with AI Magic'
                                                     )}
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {fieldsChanged.length > 0 && (
+                                            <div className="mt-3 bg-gray-800/70 p-3 rounded-md border border-blue-600/30">
+                                                <p className="text-sm text-blue-300">
+                                                    <span className="font-medium">✅ AI enhancement applied!</span>
+                                                    <br />
+                                                    Your profile has been improved with professional language and structure.
+                                                    {!showComparison && fieldsChanged.includes('summary') && (
+                                                        <>
+                                                            <br />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowComparison(true)}
+                                                                className="mt-1 text-blue-400 hover:text-blue-300 underline text-xs"
+                                                            >
+                                                                Click here to view the changes
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="px-4 py-3 bg-gray-800 text-right sm:px-6 border-t border-gray-600">
@@ -276,9 +393,10 @@ export default function Profile() {
                                     <button
                                         type="submit"
                                         disabled={updating}
-                                        className="ml-3 bg-blue-600 hover:bg-blue-700 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                        className={`ml-3 ${saveHighlighted ? 'bg-green-600 hover:bg-green-700 transform scale-105' : 'bg-blue-600 hover:bg-blue-700'} inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300`}
+                                        style={saveHighlighted ? { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' } : {}}
                                     >
-                                        {updating ? 'Saving...' : 'Save Changes'}
+                                        {updating ? 'Saving...' : saveHighlighted ? 'Save Enhanced Profile' : 'Save Changes'}
                                     </button>
                                 </div>
                             </form>
