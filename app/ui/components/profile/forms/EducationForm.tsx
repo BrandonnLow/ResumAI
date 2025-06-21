@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Education } from '../../../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { getCardClasses, getInputClasses, getButtonClasses } from '../../../styles/theme';
 
 interface EducationFormProps {
     education: Education[];
@@ -63,7 +64,7 @@ export default function EducationForm({
 
     return (
         <div className="space-y-6">
-            <div className="bg-gray-800 border border-gray-600 shadow rounded-lg divide-y divide-gray-600">
+            <div className={`${getCardClasses()} divide-y divide-gray-600`}>
                 <div className="px-4 py-5 sm:px-6">
                     <h3 className="text-lg leading-6 font-medium text-white">Education</h3>
                     <p className="mt-1 text-sm text-gray-400">Add your educational background.</p>
@@ -83,7 +84,7 @@ export default function EducationForm({
                                         value={formData.institution}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -100,7 +101,7 @@ export default function EducationForm({
                                         value={formData.degree}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -117,7 +118,7 @@ export default function EducationForm({
                                         value={formData.field}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -133,7 +134,7 @@ export default function EducationForm({
                                         id="gpa"
                                         value={formData.gpa || ''}
                                         onChange={handleInputChange}
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -150,7 +151,7 @@ export default function EducationForm({
                                         value={formData.startDate}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -167,7 +168,7 @@ export default function EducationForm({
                                         value={formData.endDate}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -187,13 +188,13 @@ export default function EducationForm({
                                     });
                                     setEditIndex(null);
                                 }}
-                                className="bg-gray-700 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-3"
+                                className={`${getButtonClasses('secondary')} mr-3`}
                             >
                                 Clear
                             </button>
                             <button
                                 type="submit"
-                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className={getButtonClasses('primary')}
                             >
                                 {editIndex !== null ? 'Update' : 'Add'} Education
                             </button>
@@ -203,7 +204,7 @@ export default function EducationForm({
             </div>
 
             {education.length > 0 && (
-                <div className="bg-gray-800 border border-gray-600 shadow overflow-hidden sm:rounded-md">
+                <div className={`${getCardClasses()}`}>
                     <ul className="divide-y divide-gray-600">
                         {education.map((edu, index) => (
                             <li key={edu.id}>
@@ -236,7 +237,7 @@ export default function EducationForm({
                                             <button
                                                 type="button"
                                                 onClick={() => onRemove(index)}
-                                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                className={getButtonClasses('danger')}
                                             >
                                                 Remove
                                             </button>

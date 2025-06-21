@@ -310,15 +310,15 @@ export const suggestTags = async (
         if (job) {
             // JOB-SPECIFIC: Include job-relevant tags
             systemPrompt = `You are an AI assistant that suggests relevant tags for interview answers in the context of a specific job application.
-
+          
           Analyze the question and answer to identify key themes, skills, and qualities demonstrated.
           PRIORITIZE tags that are relevant to the specific job role and company.
           Include technical skills, soft skills, and role-specific competencies.
-
+          
           Suggest 4-6 concise tags that accurately categorize the content with emphasis on job relevance.
           Examples include technical skills (e.g., "Python", "data analysis"), soft skills (e.g., "leadership", "communication"),
           role-specific skills (e.g., "project management", "customer service"), and company-relevant skills.
-
+          
           Return the tags as a JSON array of strings.
           Example format: {"tags": ["leadership", "conflict resolution", "team management", "stakeholder communication"]}`;
 

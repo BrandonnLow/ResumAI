@@ -1,20 +1,3 @@
-export interface UserProfile {
-    uid: string;
-    name: string;
-    email: string;
-    phone?: string;
-    location?: string;
-    summary?: string;
-    education: Education[];
-    workExperience: WorkExperience[];
-    projects: Project[];
-    skills: Skill[];
-    extracurriculars: Extracurricular[];
-    additionalInfo?: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
 export interface Education {
     id: string;
     institution: string;
@@ -57,6 +40,23 @@ export interface Extracurricular {
     endDate?: string;
 }
 
+export interface UserProfile {
+    uid: string;
+    name: string;
+    email: string;
+    phone?: string;
+    location?: string;
+    summary?: string;
+    education: Education[];
+    workExperience: WorkExperience[];
+    projects: Project[];
+    skills: Skill[];
+    extracurriculars: Extracurricular[];
+    additionalInfo?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 // Question and Answer types
 export type QuestionCategory = 'Motivational' | 'Behavioral' | 'Technical' | 'Personality';
 
@@ -93,6 +93,8 @@ export interface Job {
     title: string;
     description?: string;
     status: JobStatus;
+    resumeUrl?: string;
+    coverLetterUrl?: string;
     notes?: string;
     createdAt: Date;
     updatedAt: Date;
