@@ -26,10 +26,10 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-    title: "PersonaPrep - Interview & Job AI Assistant",
+    title: "resumAI - Interview & Job AI Assistant",
     description: "Prepare for interviews with AI-powered practice sessions, track job applications, and get personalized feedback to improve your interview skills.",
     keywords: ["interview preparation", "job search", "AI assistant", "career development", "interview practice"],
-    authors: [{ name: "PersonaPrep Team" }],
+    authors: [{ name: "resumAI Team" }],
 };
 
 export default function RootLayout({
@@ -43,17 +43,20 @@ export default function RootLayout({
                 <meta name="theme-color" content="#374151" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-                <meta name="apple-mobile-web-app-title" content="PersonaPrep" />
+                <meta name="apple-mobile-web-app-title" content="resumAI" />
             </head>
             <body className="antialiased bg-gray-700 min-h-screen">
                 <AuthProvider>
                     <ToastProvider />
 
+                    {/* App structure */}
                     <div className="min-h-screen flex flex-col">
+                        {/* Navbar container */}
                         <div className="fixed top-0 left-0 right-0 z-50 w-full">
                             <Nav />
                         </div>
 
+                        {/* Main content area */}
                         <main className="flex-1 pt-16">
                             {children}
                         </main>
