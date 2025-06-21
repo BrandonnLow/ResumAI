@@ -186,7 +186,7 @@ export default function Profile() {
                         </div>
 
                         {/* Main Profile Form */}
-                        <div className={getCardClasses()}>
+                        <div className={`${getCardClasses()} mb-8`}>
                             <form onSubmit={handleSubmit}>
                                 <div className="px-4 py-5 sm:p-6">
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-6">
@@ -400,6 +400,190 @@ export default function Profile() {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+
+                        {/* Profile Sections Grid */}
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            {/* Education section */}
+                            <div className={getCardClasses()}>
+                                <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-lg font-medium text-white">Education</h2>
+                                        <p className="mt-1 text-sm text-gray-400">Your academic background</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/profile/setup')}
+                                        className={getButtonClasses('secondary')}
+                                    >
+                                        Edit Education
+                                    </button>
+                                </div>
+                                <div className="border-t border-gray-600">
+                                    {profile?.education && profile.education.length > 0 ? (
+                                        <ul className="divide-y divide-gray-600">
+                                            {profile.education.map((edu) => (
+                                                <li key={edu.id} className="px-4 py-4 sm:px-6">
+                                                    <div className="flex flex-col">
+                                                        <p className="text-sm font-medium text-blue-400">
+                                                            {edu.degree} in {edu.field}
+                                                        </p>
+                                                        <p className="mt-1 text-sm text-gray-300">{edu.institution}</p>
+                                                        <p className="mt-1 text-xs text-gray-400">
+                                                            {new Date(edu.startDate).toLocaleDateString()} - {new Date(edu.endDate).toLocaleDateString()}
+                                                            {edu.gpa && ` • GPA: ${edu.gpa}`}
+                                                        </p>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="px-4 py-5 sm:px-6 text-center">
+                                            <p className="text-sm text-gray-400">No education information added yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Work Experience section */}
+                            <div className={getCardClasses()}>
+                                <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-lg font-medium text-white">Work Experience</h2>
+                                        <p className="mt-1 text-sm text-gray-400">Your professional experience</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/profile/setup')}
+                                        className={getButtonClasses('secondary')}
+                                    >
+                                        Edit Experience
+                                    </button>
+                                </div>
+                                <div className="border-t border-gray-600">
+                                    {profile?.workExperience && profile.workExperience.length > 0 ? (
+                                        <ul className="divide-y divide-gray-600">
+                                            {profile.workExperience.map((exp) => (
+                                                <li key={exp.id} className="px-4 py-4 sm:px-6">
+                                                    <div className="flex flex-col">
+                                                        <p className="text-sm font-medium text-blue-400">{exp.position}</p>
+                                                        <p className="mt-1 text-sm text-gray-300">{exp.company}</p>
+                                                        <p className="mt-1 text-xs text-gray-400">
+                                                            {new Date(exp.startDate).toLocaleDateString()} - {new Date(exp.endDate).toLocaleDateString()}
+                                                        </p>
+                                                        <ul className="mt-2 text-sm text-gray-300 list-disc list-inside">
+                                                            {exp.description.map((bullet, index) => (
+                                                                <li key={index}>{bullet}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="px-4 py-5 sm:px-6 text-center">
+                                            <p className="text-sm text-gray-400">No work experience added yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Skills section */}
+                            <div className={getCardClasses()}>
+                                <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-lg font-medium text-white">Skills</h2>
+                                        <p className="mt-1 text-sm text-gray-400">Your technical and soft skills</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/profile/setup')}
+                                        className={getButtonClasses('secondary')}
+                                    >
+                                        Edit Skills
+                                    </button>
+                                </div>
+                                <div className="border-t border-gray-600 px-4 py-5 sm:p-6">
+                                    {profile?.skills && profile.skills.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.skills.map((skill) => (
+                                                <span key={skill.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/20 text-blue-300 border border-blue-600/30">
+                                                    {skill.name}
+                                                    {skill.level && (
+                                                        <span className="ml-1 text-xs text-blue-400">
+                                                            ({skill.level})
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <p className="text-sm text-gray-400">No skills added yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Projects section */}
+                            <div className={getCardClasses()}>
+                                <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-lg font-medium text-white">Projects</h2>
+                                        <p className="mt-1 text-sm text-gray-400">Your personal and academic projects</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/profile/setup')}
+                                        className={getButtonClasses('secondary')}
+                                    >
+                                        Edit Projects
+                                    </button>
+                                </div>
+                                <div className="border-t border-gray-600">
+                                    {profile?.projects && profile.projects.length > 0 ? (
+                                        <ul className="divide-y divide-gray-600">
+                                            {profile.projects.map((project) => (
+                                                <li key={project.id} className="px-4 py-4 sm:px-6">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center">
+                                                            <p className="text-sm font-medium text-blue-400">{project.name}</p>
+                                                            {project.link && (
+                                                                <a
+                                                                    href={project.link}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="ml-2 text-xs text-gray-400 hover:text-gray-300"
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                    </svg>
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                        <ul className="mt-2 text-sm text-gray-300 list-disc list-inside">
+                                                            {project.description.map((bullet, index) => (
+                                                                <li key={index}>{bullet}</li>
+                                                            ))}
+                                                        </ul>
+                                                        <div className="mt-2 flex flex-wrap gap-1">
+                                                            {project.technologies.map((tech, index) => (
+                                                                <span key={index} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300 border border-gray-600">
+                                                                    {tech}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="px-4 py-5 sm:px-6 text-center">
+                                            <p className="text-sm text-gray-400">No projects added yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
