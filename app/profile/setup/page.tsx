@@ -10,6 +10,7 @@ import { UserProfile, Education, WorkExperience, Project, Skill, Extracurricular
 import toast from 'react-hot-toast';
 import PrivateRoute from '../../ui/components/PrivateRoute';
 import PageWrapper from '../../ui/components/PageWrapper';
+import { getInputClasses } from '../../ui/styles/theme';
 
 // Import form components
 import EducationForm from '../../ui/components/profile/forms/EducationForm';
@@ -477,7 +478,7 @@ export default function ProfileSetup() {
                                     value={profile.name || ''}
                                     onChange={handleInputChange}
                                     required
-                                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                    className={`${getInputClasses()} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
                                 />
                             </div>
                             <div>
@@ -491,7 +492,7 @@ export default function ProfileSetup() {
                                     value={profile.email || ''}
                                     onChange={handleInputChange}
                                     required
-                                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                    className={`${getInputClasses()} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
                                 />
                             </div>
                             <div>
@@ -504,7 +505,7 @@ export default function ProfileSetup() {
                                     id="phone"
                                     value={profile.phone || ''}
                                     onChange={handleInputChange}
-                                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                    className={`${getInputClasses()} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
                                 />
                             </div>
                             <div>
@@ -517,7 +518,7 @@ export default function ProfileSetup() {
                                     id="location"
                                     value={profile.location || ''}
                                     onChange={handleInputChange}
-                                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                    className={`${getInputClasses()} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
                                     placeholder="City, State/Province, Country"
                                 />
                             </div>
@@ -532,7 +533,7 @@ export default function ProfileSetup() {
                                 rows={4}
                                 value={profile.summary || ''}
                                 onChange={handleInputChange}
-                                className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                className={`${getInputClasses('textarea')} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
                                 placeholder="Brief overview of your professional background and career goals"
                             />
                         </div>
@@ -609,7 +610,7 @@ export default function ProfileSetup() {
                             rows={6}
                             value={profile.additionalInfo || ''}
                             onChange={handleInputChange}
-                            className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                            className={`${getInputClasses('textarea')} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
                             placeholder="Any other information you'd like to include (certifications, languages, interests, etc.)"
                         />
                     </div>
