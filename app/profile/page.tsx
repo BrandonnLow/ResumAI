@@ -7,6 +7,7 @@ import { getUserProfile, updateUserProfile } from '../Services/firebase/firestor
 import { UserProfile } from '../types';
 import toast from 'react-hot-toast';
 import PrivateRoute from '../ui/components/PrivateRoute';
+import { getCardClasses, getInputClasses, getButtonClasses } from '../ui/styles/theme';
 
 export default function Profile() {
     const { currentUser } = useAuth();
@@ -96,7 +97,7 @@ export default function Profile() {
                         </div>
 
                         {/* Main Profile Form */}
-                        <div className="bg-gray-800 shadow rounded-lg">
+                        <div className={getCardClasses()}>
                             <form onSubmit={handleSubmit}>
                                 <div className="px-4 py-5 sm:p-6">
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-6">
@@ -112,7 +113,7 @@ export default function Profile() {
                                                     value={formData.name || ''}
                                                     onChange={handleInputChange}
                                                     required
-                                                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
+                                                    className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                 />
                                             </div>
                                         </div>
@@ -129,7 +130,7 @@ export default function Profile() {
                                                     value={formData.email || ''}
                                                     onChange={handleInputChange}
                                                     required
-                                                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
+                                                    className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                 />
                                             </div>
                                         </div>
@@ -145,7 +146,7 @@ export default function Profile() {
                                                     id="phone"
                                                     value={formData.phone || ''}
                                                     onChange={handleInputChange}
-                                                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
+                                                    className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                 />
                                             </div>
                                         </div>
@@ -161,7 +162,7 @@ export default function Profile() {
                                                     id="location"
                                                     value={formData.location || ''}
                                                     onChange={handleInputChange}
-                                                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
+                                                    className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                     placeholder="City, State/Province, Country"
                                                 />
                                             </div>
@@ -178,7 +179,7 @@ export default function Profile() {
                                                     rows={4}
                                                     value={formData.summary || ''}
                                                     onChange={handleInputChange}
-                                                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
+                                                    className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                 />
                                             </div>
                                         </div>
@@ -194,7 +195,7 @@ export default function Profile() {
                                                     rows={4}
                                                     value={formData.additionalInfo || ''}
                                                     onChange={handleInputChange}
-                                                    className="bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
+                                                    className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                                 />
                                             </div>
                                         </div>
@@ -204,7 +205,7 @@ export default function Profile() {
                                     <button
                                         type="button"
                                         onClick={() => router.push('/profile/setup')}
-                                        className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md text-sm"
+                                        className={getButtonClasses('secondary')}
                                     >
                                         Edit Full Profile
                                     </button>
