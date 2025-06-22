@@ -25,6 +25,7 @@ export default function ExtracurricularForm({
         startDate: '',
         endDate: '',
     });
+    const [editIndex, setEditIndex] = useState<number | null>(null);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -36,7 +37,14 @@ export default function ExtracurricularForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onAdd({ ...formData, id: uuidv4() });
+
+        if (editIndex !== null) {
+            onUpdate(editIndex, { ...extracurriculars[editIndex], ...formData });
+            setEditIndex(null);
+        } else {
+            onAdd({ ...formData, id: uuidv4() });
+        }
+
         setFormData({
             id: '',
             name: '',
@@ -45,6 +53,11 @@ export default function ExtracurricularForm({
             startDate: '',
             endDate: '',
         });
+    };
+
+    const handleEdit = (index: number) => {
+        setFormData(extracurriculars[index]);
+        setEditIndex(index);
     };
 
     return (
@@ -154,6 +167,7 @@ export default function ExtracurricularForm({
                                         startDate: '',
                                         endDate: '',
                                     });
+                                    setEditIndex(null);
                                 }}
                                 className="bg-gray-700 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-3"
                             >
@@ -163,7 +177,7 @@ export default function ExtracurricularForm({
                                 type="submit"
                                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
-                                Add Activity
+                                {editIndex !== null ? 'Update' : 'Add'} Activity
                             </button>
                         </div>
                     </form>
@@ -200,6 +214,13 @@ export default function ExtracurricularForm({
                                             )}
                                         </div>
                                         <div className="flex space-x-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEdit(index)}
+                                                className="inline-flex items-center px-2.5 py-1.5 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                            >
+                                                Edit
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => onRemove(index)}

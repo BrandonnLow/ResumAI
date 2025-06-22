@@ -90,10 +90,114 @@ export default function ProjectForm({
         setEditIndex(index);
     };
 
-
-
     return (
         <div className="space-y-6">
+            <div className="bg-gray-800 border border-gray-600 shadow rounded-lg divide-y divide-gray-600">
+                <div className="px-4 py-5 sm:px-6">
+                    <h3 className="text-lg leading-6 font-medium text-white">Projects</h3>
+                    <p className="mt-1 text-sm text-gray-400">Add your personal or academic projects.</p>
+                </div>
+                <div className="px-4 py-5 sm:p-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div className="sm:col-span-4">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+                                    Project Name
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        id="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                                <label htmlFor="description" className="block text-sm font-medium text-gray-300">
+                                    Description (one bullet point per line)
+                                </label>
+                                <div className="mt-1">
+                                    <textarea
+                                        id="description"
+                                        name="description"
+                                        rows={4}
+                                        value={formData.description}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        placeholder="• Developed a feature that...&#10;• Implemented algorithms to...&#10;• Designed and built..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                                <label htmlFor="technologiesStr" className="block text-sm font-medium text-gray-300">
+                                    Technologies Used (comma separated)
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        type="text"
+                                        name="technologiesStr"
+                                        id="technologiesStr"
+                                        value={formData.technologiesStr}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        placeholder="React, Node.js, Firebase, TypeScript"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                                <label htmlFor="link" className="block text-sm font-medium text-gray-300">
+                                    Project Link (optional)
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        type="url"
+                                        name="link"
+                                        id="link"
+                                        value={formData.link || ''}
+                                        onChange={handleInputChange}
+                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        placeholder="https://github.com/yourusername/project"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setFormData({
+                                        name: '',
+                                        description: '',
+                                        technologiesStr: '',
+                                        link: '',
+                                    });
+                                    setEditIndex(null);
+                                }}
+                                className="bg-gray-700 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-3"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                type="submit"
+                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                {editIndex !== null ? 'Update' : 'Add'} Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             {projects.length > 0 && (
                 <div className="bg-gray-800 border border-gray-600 shadow overflow-hidden sm:rounded-md">
                     <ul className="divide-y divide-gray-600">
@@ -135,23 +239,20 @@ export default function ProjectForm({
                                             </div>
                                         </div>
                                         <div className="flex space-x-2">
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleEdit(index)}
-                                                    className="inline-flex items-center px-2.5 py-1.5 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onRemove(index)}
-                                                    className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                                >
-                                                    Remove
-                                                </button>
-                                            </div>
-
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEdit(index)}
+                                                className="inline-flex items-center px-2.5 py-1.5 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => onRemove(index)}
+                                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                            >
+                                                Remove
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
