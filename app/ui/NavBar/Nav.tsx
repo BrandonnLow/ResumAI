@@ -47,21 +47,17 @@ export default function Nav() {
         }
     };
 
-    // Don't show navigation items on login/register pages
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
-    // Determine which navigation items to show
     const getNavigationItems = () => {
         if (!currentUser || isAuthPage || profileLoading) {
             return [];
         }
 
-        // If profile is complete, show all navigation
         if (profileComplete) {
             return allNavigation;
         }
 
-        // If profile is not complete, only show profile setup
         return profileOnlyNavigation;
     };
 
@@ -69,16 +65,15 @@ export default function Nav() {
 
     return (
         <nav className="h-16">
-            <div className="flex space-x-4 bg-[#1d1b1b] p-4 justify-between h-full items-center">
+            <div className="flex space-x-4 bg-[#0a0a0a]  pl-1 md:pl-3 py-4 justify-between h-full items-center">
                 <div className="max-w-[90%] flex flex-row items-center">
                     <Link href="/">
-                        <Image src={smalllogo} width={80} height={50} className="my-1 md:hidden block" alt="Logo" />
-                        <Image src={biglogo} width={270} height={50} className="hidden md:block" alt="Logo" />
+                        <Image src={smalllogo} width={80} height={50} className="my-1 md:hidden block py-1 flex-shrink-0 min-w-[65px] min-h-[48px] max-w-[65px] max-h-[48px]" alt="Logo" />
+                        <Image src={biglogo} width={270} height={50} className="hidden md:block py-1 flex-shrink-0 min-w-[180px] min-h-[50px] max-w-[180px] max-h-[50px]" alt="Logo" />
                     </Link>
 
-                    {/* Show navigation items */}
                     {navigation.length > 0 && (
-                        <div className="flex flex-row space-x-4 p-3">
+                        <div className="flex flex-row sm:space-x-4 ml-2 space-x-[1px] py-3">
                             {navigation.map((item) => {
                                 const isActive = getPagePath(pathname) === getPagePath(item.href) ||
                                     (item.name === 'Profile' && (pathname === '/profile' || pathname === '/profile/setup'));
@@ -99,7 +94,6 @@ export default function Nav() {
                                 );
                             })}
 
-                            {/* Show profile completion indicator */}
                             {currentUser && !profileComplete && (
                                 <div className="flex items-center ml-4 px-3 py-1 bg-blue-900/20 border border-blue-600/30 rounded-full">
                                     <div className="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></div>
@@ -110,17 +104,15 @@ export default function Nav() {
                     )}
                 </div>
 
-                {/* Auth buttons */}
                 {!isAuthPage && (
                     <div className="flex items-center space-x-3">
                         {currentUser ? (
                             <div className="flex items-center space-x-3">
-                                {/* User email display for mobile */}
-                                <span className="hidden sm:block text-gray-400 text-sm truncate max-w-32">
+                                <span className="hidden lg:block text-gray-400 text-sm truncate max-w-32">
                                     {currentUser.email}
                                 </span>
                                 <button
-                                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                    className="text-gray-300 hover:text-white pr-3 py-2 rounded-md text-sm font-medium transition-colors"
                                     onClick={handleLogout}
                                 >
                                     Logout
@@ -128,7 +120,7 @@ export default function Nav() {
                             </div>
                         ) : (
                             <button
-                                className="bg-gradient-to-r from-gray-100 to-gray-400 text-gray-700 font-semibold px-4 py-2 rounded-full hover:from-gray-200 hover:to-gray-500 transition-all duration-200 transform hover:scale-105"
+                                className="bg-gradient-to-r from-gray-100 to-gray-400 text-gray-700 font-semibold px-4 pr-2 rounded-full hover:from-gray-200 hover:to-gray-500 transition-all duration-200 transform hover:scale-105"
                                 onClick={() => router.push('/login')}
                             >
                                 Login
