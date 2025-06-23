@@ -18,6 +18,7 @@ import { db } from '../../../Services/firebase/config';
 import PrivateRoute from '../../../ui/components/PrivateRoute';
 import ProfileCheck from '../../../ui/components/ProfileCheck';
 import { getCardClasses, getInputClasses, getButtonClasses } from '../../../ui/styles/theme';
+import VoiceEmotionRecorder from '@/app/ui/components/recordButton/recordButton';
 
 export default function PracticeSession() {
     const params = useParams();
@@ -40,7 +41,6 @@ export default function PracticeSession() {
     const [gettingFeedback, setGettingFeedback] = useState<boolean>(false);
     const [customTagInput, setCustomTagInput] = useState('');
 
-    // Load session data on component mount
     useEffect(() => {
         const loadSessionData = async () => {
             if (!sessionId || !currentUser) return;
@@ -507,14 +507,15 @@ export default function PracticeSession() {
                                         placeholder="Type your answer here..."
                                     />
                                 </div>
-
+                                
                                 {!feedback && (
-                                    <div className="flex justify-end">
+                                    <div className="flex justify-between items-end gap-x-[50px]">
+                                        <VoiceEmotionRecorder setUserAnswer={setUserAnswer} />
                                         <button
                                             type="button"
                                             onClick={requestFeedback}
                                             disabled={!userAnswer.trim() || gettingFeedback || savedAnswer}
-                                            className={`${getButtonClasses('primary')} disabled:opacity-50`}
+                                            className={`${getButtonClasses('primary')} h-10 disabled:opacity-50`}
                                         >
                                             {gettingFeedback ? 'Getting Feedback...' : 'Get AI Feedback'}
                                         </button>
