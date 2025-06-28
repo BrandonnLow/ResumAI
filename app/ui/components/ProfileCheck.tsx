@@ -36,7 +36,7 @@ export default function ProfileCheck({ children }: ProfileCheckProps) {
     return (
         <div className="min-h-screen bg-gray-700">
             {/* Header */}
-            <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+            <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                 <div className="max-w-4xl mx-auto text-center">
                     <h1 className="text-3xl font-bold text-white mb-2">Complete Your Profile</h1>
                     <p className="text-gray-400">Help us understand your background to provide tailored interview questions.</p>

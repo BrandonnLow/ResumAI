@@ -134,7 +134,7 @@ export default function JobDetail() {
             <PrivateRoute>
                 <ProfileCheck>
                     <div className="min-h-screen bg-gray-700">
-                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                             <div className="max-w-7xl mx-auto text-center">
                                 <h1 className="text-2xl font-bold text-red-400 mb-4">Job not found</h1>
                                 <p className="mb-4 text-gray-300">The job you're looking for doesn't exist or you don't have access to it.</p>

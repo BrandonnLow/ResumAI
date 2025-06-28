@@ -393,7 +393,7 @@ export default function PracticeSession() {
             <PrivateRoute>
                 <ProfileCheck>
                     <div className="min-h-screen bg-gray-700">
-                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                             <div className="max-w-4xl mx-auto text-center">
                                 <h1 className="text-2xl font-bold text-white mb-2">Generating Questions</h1>
                                 <p className="text-gray-400">
@@ -422,7 +422,7 @@ export default function PracticeSession() {
             <PrivateRoute>
                 <ProfileCheck>
                     <div className="min-h-screen bg-gray-700">
-                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                             <div className="max-w-4xl mx-auto text-center">
                                 <h1 className="text-2xl font-bold text-red-400 mb-4">No questions available</h1>
                                 <p className="mb-4 text-gray-300">We couldn't load any questions for this session.</p>
@@ -448,7 +448,7 @@ export default function PracticeSession() {
             <PrivateRoute>
                 <ProfileCheck>
                     <div className="min-h-screen bg-gray-700">
-                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                             <div className="max-w-4xl mx-auto text-center">
                                 <h1 className="text-2xl font-bold text-red-400 mb-4">Error loading question</h1>
                                 <p className="mb-4 text-gray-300">There was a problem loading the question. Please try again.</p>
@@ -471,7 +471,7 @@ export default function PracticeSession() {
             <ProfileCheck>
                 <div className="min-h-screen bg-gray-700">
                     {/* Header */}
-                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                         <div className="max-w-4xl mx-auto">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                 <div className="mb-4 sm:mb-0">

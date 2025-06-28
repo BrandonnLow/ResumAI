@@ -264,7 +264,7 @@ export default function AnswerLibrary() {
             <ProfileCheck>
                 <div className="min-h-screen bg-gray-700">
                     {/* Header */}
-                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                             <div className="mb-4 sm:mb-0">
                                 <h1 className="text-2xl font-bold text-white">Answer Library</h1>
