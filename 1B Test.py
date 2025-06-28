@@ -72,7 +72,8 @@ def main():
     print("Model loaded successfully!")
     
     skeleton = "Tell me about a time when you had to solve a technical challenge under pressure."
-    userInput = """During my capstone project, our team's database crashed two days before the final presentation. I quickly set up a backup PostgreSQL instance on AWS RDS, migrated our data using custom Python scripts, and updated all API endpoints. We presented on time and got an A+ grade."""
+    userInput = """In my web development class, our team built a student portfolio platform and I was responsible for deployment and hosting. I set up the backend on EC2 with auto-scaling for our demo day when 200+ students would access it simultaneously. When our site crashed during initial testing, I quickly configured load balancing and database connection pooling, which allowed us to handle the traffic smoothly.
+"""
     
     print(f"\nQuestion: {skeleton}")
     print(f"\nAnswer: {userInput}")
