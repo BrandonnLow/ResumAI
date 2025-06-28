@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../Context/AuthContext';
 import { getCardClasses, getButtonClasses } from '../styles/theme';
+import { LoadingPage } from '../components/Loading';
 
 interface ProfileCheckProps {
     children: React.ReactNode;
@@ -14,21 +15,17 @@ export default function ProfileCheck({ children }: ProfileCheckProps) {
     const router = useRouter();
     const pathname = usePathname();
 
-    // Pages that don't require profile completion
     const allowedPages = ['/profile', '/profile/setup'];
     const isAllowedPage = allowedPages.some(page => pathname.startsWith(page));
 
-    // Show loading spinner while checking profile status
     if (profileLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-700">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
-                    <p className="text-gray-300">Loading your profile...</p>
-                </div>
+            <div className="min-h-screen bg-gray-700 flex items-center justify-center">
+                <LoadingPage text="Loading your profile..." />
             </div>
         );
     }
+
 
     // If user has profile or is on an allowed page, show content
     if (profileComplete || isAllowedPage) {

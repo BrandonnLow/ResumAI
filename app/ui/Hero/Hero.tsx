@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../Context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { LoadingPage } from '../components/Loading';
 
 export default function Hero() {
   const [rotation, setRotation] = useState(0);
@@ -29,7 +30,7 @@ export default function Hero() {
   if (loading) {
     return (
       <div className="flex mx-auto bg-gray-700 md:pt-8 h-screen items-center justify-center w-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        <LoadingPage text="Loading resuMate..." />
       </div>
     );
   }

@@ -1,5 +1,13 @@
 import openai from './api';
 import { UserProfile, QuestionCategory, Job } from '../../types';
+interface OpenAIQuestionResponse {
+    text: string;
+    category: string;
+}
+
+interface OpenAIQuestionsResponse {
+    questions?: OpenAIQuestionResponse[];
+}
 
 // Extract information from resume PDF
 export const extractResumeInfo = async (resumeText: string): Promise<Partial<UserProfile>> => {
@@ -100,7 +108,6 @@ Focus especially on work experience descriptions, project descriptions, and the 
     }
 };
 
-// Generate interview questions with proper context prioritization
 export const generateQuestions = async (
     profile: UserProfile,
     categories: QuestionCategory[],
@@ -111,26 +118,49 @@ export const generateQuestions = async (
         let systemPrompt = '';
         let userPrompt = '';
 
+        // Validate that categories are provided
+        if (!categories || categories.length === 0) {
+            throw new Error('No question categories selected');
+        }
+
+        // Create category descriptions for better AI understanding
+        const categoryDescriptions = {
+            'Motivational': 'Questions about career goals, company interest, role motivation, and aspirations',
+            'Behavioral': 'Questions about past experiences using STAR method, teamwork, conflict resolution, and leadership examples',
+            'Technical': 'Questions about role-specific skills, problem-solving approaches, and domain knowledge',
+            'Personality': 'Questions about work style, strengths, weaknesses, and cultural fit'
+        };
+
+        const selectedCategoryDescriptions = categories.map(cat =>
+            `${cat}: ${categoryDescriptions[cat]}`
+        ).join('\n');
+
         if (job) {
-            // JOB-SPECIFIC: Prioritize job context first, then candidate profile
+            // Prioritize job context first, then candidate profile
             systemPrompt = `You are an AI assistant that generates highly targeted interview questions for specific job positions.
+
+CRITICAL REQUIREMENT: You MUST generate questions ONLY from these selected categories: ${categories.join(', ')}.
+DO NOT generate questions from any other categories.
+
+SELECTED CATEGORIES DEFINITIONS:
+${selectedCategoryDescriptions}
 
 PRIORITY CONTEXT ORDER:
 1. Job Requirements (PRIMARY) - Generate questions that directly assess fit for this specific role
 2. Candidate Background (SECONDARY) - Use candidate info to customize question complexity and examples
 
 QUESTION GENERATION STRATEGY:
+- Generate exactly ${count} questions
+- Each question MUST be from one of the selected categories: ${categories.join(', ')}
 - Focus heavily on skills, experiences, and qualities required for this specific position
 - Ask about challenges and scenarios relevant to this company and role
-- Assess technical competencies mentioned in the job description
-- Evaluate cultural fit for this specific company
-- Test problem-solving abilities relevant to the role's responsibilities
-- If candidate background doesn't align with job requirements, ask questions that reveal transferable skills and learning ability
+- Assess technical competencies mentioned in the job description (only if Technical category is selected)
+- Evaluate cultural fit for this specific company (only if Personality or Motivational categories are selected)
+- Test behavioral examples relevant to the role's responsibilities (only if Behavioral category is selected)
 
-Generate ${count} challenging but fair interview questions that would realistically be asked for this position.
-Create questions that help assess if the candidate can succeed in THIS SPECIFIC ROLE.
-
-Categories to focus on: ${categories.join(', ')}.
+STRICT CATEGORY DISTRIBUTION:
+- Distribute questions as evenly as possible across the selected categories: ${categories.join(', ')}
+- If generating ${count} questions across ${categories.length} categories, aim for roughly ${Math.ceil(count / categories.length)} questions per category
 
 Return questions as a JSON array of objects with 'text' and 'category' properties.
 Example format:
@@ -140,7 +170,7 @@ Example format:
     {"text": "Why do you want to work at our company?", "category": "Motivational"}
   ]
 }
-The 'category' must be one of: Motivational, Behavioral, Technical, Personality.`;
+The 'category' field MUST be exactly one of: ${categories.join(', ')}.`;
 
             userPrompt = `TARGET POSITION DETAILS:
 Company: ${job.company}
@@ -150,18 +180,28 @@ ${job.description ? `Job Description: ${job.description}` : ''}
 CANDIDATE BACKGROUND (for context and customization):
 ${JSON.stringify(profile)}
 
-Generate questions that primarily assess fit for the ${job.title} position at ${job.company}, using the candidate's background to appropriately calibrate question difficulty and examples.`;
+Generate exactly ${count} questions that assess fit for the ${job.title} position at ${job.company}.
+REMEMBER: Only generate questions from these categories: ${categories.join(', ')}.
+Distribute questions evenly across the selected categories.`;
 
         } else {
             // GENERAL: Use candidate profile as primary context
             systemPrompt = `You are an AI assistant that generates relevant interview questions for job candidates based on their background and experience.
 
-Generate ${count} general interview questions that are appropriate for the candidate's profile and experience level.
+CRITICAL REQUIREMENT: You MUST generate questions ONLY from these selected categories: ${categories.join(', ')}.
+DO NOT generate questions from any other categories.
+
+SELECTED CATEGORIES DEFINITIONS:
+${selectedCategoryDescriptions}
+
+Generate exactly ${count} general interview questions that are appropriate for the candidate's profile and experience level.
 Create challenging but fair questions that would be asked in real interviews across various companies and roles.
 
-Categories to focus on: ${categories.join(', ')}.
+STRICT CATEGORY DISTRIBUTION:
+- Distribute questions as evenly as possible across the selected categories: ${categories.join(', ')}
+- If generating ${count} questions across ${categories.length} categories, aim for roughly ${Math.ceil(count / categories.length)} questions per category
 
-For technical questions, ensure they're appropriate for the candidate's skills and experience level.
+For technical questions (only if Technical category is selected), ensure they're appropriate for the candidate's skills and experience level.
 Return questions as a JSON array of objects with 'text' and 'category' properties.
 Example format:
 {
@@ -170,11 +210,15 @@ Example format:
     {"text": "Why do you want to work at our company?", "category": "Motivational"}
   ]
 }
-The 'category' must be one of: Motivational, Behavioral, Technical, Personality.`;
+The 'category' field MUST be exactly one of: ${categories.join(', ')}.`;
 
             userPrompt = `CANDIDATE PROFILE: ${JSON.stringify(profile)}
 
-Generate general interview questions suitable for this candidate's background and experience level.`;
+SELECTED CATEGORIES: ${categories.join(', ')}
+
+Generate exactly ${count} general interview questions suitable for this candidate's background and experience level.
+REMEMBER: Only generate questions from these categories: ${categories.join(', ')}.
+Distribute questions evenly across the selected categories.`;
         }
 
         const response = await openai.chat.completions.create({
@@ -199,33 +243,55 @@ Generate general interview questions suitable for this candidate's background an
         }
 
         try {
-            const parsedContent = JSON.parse(content);
-            // Handle different possible response formats
+            const parsedContent: OpenAIQuestionsResponse | OpenAIQuestionResponse[] = JSON.parse(content);
+            let questions: OpenAIQuestionResponse[] = [];
+
             if (Array.isArray(parsedContent)) {
-                return parsedContent;
+                questions = parsedContent;
             } else if (parsedContent.questions && Array.isArray(parsedContent.questions)) {
-                return parsedContent.questions;
+                questions = parsedContent.questions;
             } else {
-                // Create fallback questions if format is unexpected
                 console.error("Unexpected response format:", parsedContent);
+                // Create fallback questions from selected categories only
                 return categories.map((category, index) => ({
-                    text: `Interview question ${index + 1} for ${category} category`,
+                    text: `Sample ${category} interview question ${index + 1}`,
                     category: category
                 }));
             }
+
+            // Validate that all questions are from selected categories
+            const validQuestions = questions.filter((q: OpenAIQuestionResponse) =>
+                q.category && categories.includes(q.category as QuestionCategory)
+            );
+
+            if (validQuestions.length < count) {
+                const needed = count - validQuestions.length;
+                for (let i = 0; i < needed; i++) {
+                    const categoryIndex = i % categories.length;
+                    validQuestions.push({
+                        text: `Interview question about ${categories[categoryIndex].toLowerCase()} skills and experience`,
+                        category: categories[categoryIndex]
+                    });
+                }
+            }
+
+            return validQuestions.slice(0, count).map((q: OpenAIQuestionResponse) => ({
+                text: q.text,
+                category: q.category as QuestionCategory
+            }));
+
         } catch (parseError) {
             console.error("Error parsing JSON response:", parseError);
-            // Create fallback questions if parsing fails
+            // Create fallback questions from selected categories only
             return categories.map((category, index) => ({
-                text: `Interview question ${index + 1} for ${category} category`,
+                text: `Sample ${category} interview question ${index + 1}`,
                 category: category
             }));
         }
     } catch (error) {
         console.error("Error generating questions:", error);
-        // Create fallback questions if API call fails
         return categories.map((category, index) => ({
-            text: `Interview question ${index + 1} for ${category} category`,
+            text: `Sample ${category} interview question ${index + 1}`,
             category: category
         }));
     }
@@ -310,15 +376,15 @@ export const suggestTags = async (
         if (job) {
             // JOB-SPECIFIC: Include job-relevant tags
             systemPrompt = `You are an AI assistant that suggests relevant tags for interview answers in the context of a specific job application.
-          
+
           Analyze the question and answer to identify key themes, skills, and qualities demonstrated.
           PRIORITIZE tags that are relevant to the specific job role and company.
           Include technical skills, soft skills, and role-specific competencies.
-          
+
           Suggest 4-6 concise tags that accurately categorize the content with emphasis on job relevance.
           Examples include technical skills (e.g., "Python", "data analysis"), soft skills (e.g., "leadership", "communication"),
           role-specific skills (e.g., "project management", "customer service"), and company-relevant skills.
-          
+
           Return the tags as a JSON array of strings.
           Example format: {"tags": ["leadership", "conflict resolution", "team management", "stakeholder communication"]}`;
 
@@ -368,17 +434,16 @@ Generate tags that emphasize relevance to the ${job.title} position at ${job.com
         }
 
         try {
-            const parsedContent = JSON.parse(content);
+            const parsedContent: { tags?: string[] } | string[] = JSON.parse(content);
             // Handle different possible response formats
             if (Array.isArray(parsedContent)) {
                 return parsedContent;
             } else if (parsedContent.tags && Array.isArray(parsedContent.tags)) {
                 return parsedContent.tags;
             } else {
-                // Extract all values if format is unexpected
                 const allValues = Object.values(parsedContent).flat();
                 return Array.isArray(allValues) ?
-                    allValues.filter(v => typeof v === 'string') :
+                    allValues.filter((v: unknown): v is string => typeof v === 'string') :
                     [];
             }
         } catch (parseError) {

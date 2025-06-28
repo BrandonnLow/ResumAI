@@ -269,3 +269,123 @@ label {
         transform: rotate(360deg);
     }
 }
+
+
+/* Wave animation */
+@keyframes wave {
+
+    0%,
+    40%,
+    100% {
+        transform: scaleY(0.4);
+    }
+
+    20% {
+        transform: scaleY(1);
+    }
+}
+
+.animate-wave {
+    animation: wave 1s infinite ease-in-out;
+}
+
+/* Morphing animation */
+@keyframes morph {
+    0% {
+        border-radius: 50%;
+        transform: rotate(0deg);
+    }
+
+    25% {
+        border-radius: 25% 75%;
+        transform: rotate(90deg);
+    }
+
+    50% {
+        border-radius: 50%;
+        transform: rotate(180deg);
+    }
+
+    75% {
+        border-radius: 75% 25%;
+        transform: rotate(270deg);
+    }
+
+    100% {
+        border-radius: 50%;
+        transform: rotate(360deg);
+    }
+}
+
+.animate-morph {
+    animation: morph 2s infinite linear;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 1.5s infinite;
+}
+
+/* Bounce with different timing */
+@keyframes bounce-custom {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-bounce-custom {
+    animation: bounce-custom 1.4s infinite ease-in-out;
+}
+
+/* Floating animation */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Glow pulse */
+@keyframes glow-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6;
+    }
+
+    50% {
+        box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6, 0 0 30px #3b82f6;
+    }
+}
+
+.animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+}

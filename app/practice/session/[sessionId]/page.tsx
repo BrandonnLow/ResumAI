@@ -18,7 +18,7 @@ import { db } from '../../../Services/firebase/config';
 import PrivateRoute from '../../../ui/components/PrivateRoute';
 import ProfileCheck from '../../../ui/components/ProfileCheck';
 import { getCardClasses, getInputClasses, getButtonClasses } from '../../../ui/styles/theme';
-import VoiceEmotionRecorder from '@/app/ui/components/recordButton/recordButton';
+import Loading, { LoadingPage } from '../../../ui/components/Loading';
 
 export default function PracticeSession() {
     const params = useParams();
@@ -60,6 +60,12 @@ export default function PracticeSession() {
 
                 if (sessionData.userId !== currentUser.uid) {
                     toast.error('You do not have access to this session');
+                    setGeneratingQuestions(false);
+                    return router.push('/practice/setup');
+                }
+
+                if (!sessionData.categories || sessionData.categories.length === 0) {
+                    toast.error('Invalid session: No question categories found');
                     setGeneratingQuestions(false);
                     return router.push('/practice/setup');
                 }
@@ -112,7 +118,7 @@ export default function PracticeSession() {
         loadSessionData();
     }, [sessionId, currentUser, router]);
 
-    // Generate questions for the session
+    // Generate questions for the session with validation
     const generateSessionQuestions = async (
         sessionData: SessionType,
         profile: UserProfile,
@@ -121,6 +127,8 @@ export default function PracticeSession() {
         if (!sessionId) return;
 
         try {
+            console.log('Generating questions for categories:', sessionData.categories);
+
             const questionsData = await generateQuestions(
                 profile,
                 sessionData.categories,
@@ -135,7 +143,22 @@ export default function PracticeSession() {
                 return;
             }
 
-            const questions: Question[] = questionsData.map((q, index) => {
+            // Validate that generated questions match selected categories
+            const validQuestions = questionsData.filter(q =>
+                q.category && sessionData.categories.includes(q.category)
+            );
+
+            if (validQuestions.length === 0) {
+                console.error('No valid questions generated for selected categories:', sessionData.categories);
+                toast.dismiss();
+                toast.error('Failed to generate questions for selected categories. Please try again.');
+                setGeneratingQuestions(false);
+                return;
+            }
+
+            console.log('Generated questions:', validQuestions.map(q => ({ text: q.text.substring(0, 50) + '...', category: q.category })));
+
+            const questions: Question[] = validQuestions.map((q, index) => {
                 const cleanQuestion: Question = {
                     id: `q-${Date.now()}-${index}`,
                     text: q.text || `Question ${index + 1}`,
@@ -172,7 +195,7 @@ export default function PracticeSession() {
                 setCurrentQuestionIndex(0);
 
                 toast.dismiss();
-                toast.success('Questions generated!');
+                toast.success(`Questions generated for: ${sessionData.categories.join(', ')}`);
             } catch (updateError) {
                 console.error('Error updating practice session:', updateError);
                 toast.dismiss();
@@ -354,36 +377,36 @@ export default function PracticeSession() {
         }
     };
 
-    if (loading && !session) {
+    if (loading) {
         return (
             <PrivateRoute>
                 <ProfileCheck>
-                    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400"></div>
-                    </div>
+                    <LoadingPage text="Loading..." />
                 </ProfileCheck>
             </PrivateRoute>
         );
     }
+
 
     if (generatingQuestions) {
         return (
             <PrivateRoute>
                 <ProfileCheck>
                     <div className="min-h-screen bg-gray-700">
-                        {/* Header for generating questions state */}
                         <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
                             <div className="max-w-4xl mx-auto text-center">
                                 <h1 className="text-2xl font-bold text-white mb-2">Generating Questions</h1>
-                                <p className="text-gray-400">Creating personalized interview questions for you...</p>
+                                <p className="text-gray-400">
+                                    Creating personalized interview questions for: {session?.categories?.join(', ') || 'selected categories'}
+                                </p>
                             </div>
                         </div>
 
                         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mb-4"></div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Generating personalized questions...</h2>
+                            <Loading variant="wave" size="lg" />
+                            <h2 className="text-xl font-semibold text-white mb-2 mt-6">Generating personalized questions...</h2>
                             <p className="text-gray-300 text-center max-w-md">
-                                Our AI is analyzing your profile {job && 'and job requirements'} to create relevant interview questions.
+                                Our AI is analyzing your profile {job && 'and job requirements'} to create relevant {session?.categories?.join(', ').toLowerCase()} interview questions.
                             </p>
                         </div>
                     </div>
@@ -458,6 +481,11 @@ export default function PracticeSession() {
                                             Question {currentQuestionIndex + 1} of {session.questions.length}
                                         </p>
                                     )}
+                                    {session?.categories && (
+                                        <p className="text-sm text-gray-400">
+                                            Categories: <span className="text-blue-400">{session.categories.join(', ')}</span>
+                                        </p>
+                                    )}
                                     {job && (
                                         <p className="text-sm text-gray-400">
                                             Preparing for: <span className="text-blue-400">{job.title}</span> at <span className="text-blue-400">{job.company}</span>
@@ -488,6 +516,11 @@ export default function PracticeSession() {
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeColor(displayQuestion.category)}`}>
                                         {displayQuestion.category}
                                     </span>
+                                    {session?.categories && !session.categories.includes(displayQuestion.category) && (
+                                        <span className="ml-2 text-xs text-red-400">
+                                            ⚠️ Category mismatch
+                                        </span>
+                                    )}
                                 </div>
 
                                 <h2 className="text-xl font-medium text-white mb-6">{displayQuestion.text}</h2>
@@ -507,15 +540,14 @@ export default function PracticeSession() {
                                         placeholder="Type your answer here..."
                                     />
                                 </div>
-                                
+
                                 {!feedback && (
-                                    <div className="flex justify-between items-end gap-x-[50px]">
-                                        <VoiceEmotionRecorder setUserAnswer={setUserAnswer} />
+                                    <div className="flex justify-end">
                                         <button
                                             type="button"
                                             onClick={requestFeedback}
                                             disabled={!userAnswer.trim() || gettingFeedback || savedAnswer}
-                                            className={`${getButtonClasses('primary')} h-10 disabled:opacity-50`}
+                                            className={`${getButtonClasses('primary')} disabled:opacity-50`}
                                         >
                                             {gettingFeedback ? 'Getting Feedback...' : 'Get AI Feedback'}
                                         </button>

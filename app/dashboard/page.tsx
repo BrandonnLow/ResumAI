@@ -10,6 +10,8 @@ import PrivateRoute from '../ui/components/PrivateRoute';
 import ProfileCheck from '../ui/components/ProfileCheck';
 import { getCardClasses, getButtonClasses } from '../ui/styles/theme';
 import Link from 'next/link';
+import { LoadingPage } from '../ui/components/Loading';
+
 
 export default function Dashboard() {
     const { currentUser, profileComplete } = useAuth();
@@ -148,16 +150,12 @@ export default function Dashboard() {
         return (
             <PrivateRoute>
                 <ProfileCheck>
-                    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
-                            <p className="text-gray-300">Loading your dashboard...</p>
-                        </div>
-                    </div>
+                    <LoadingPage text="Loading your dashboard..." />
                 </ProfileCheck>
             </PrivateRoute>
         );
     }
+
 
     const handleQuickStatusUpdate = async (jobId: string, newStatus: JobStatus) => {
         if (updatingJobId || !currentUser) return;

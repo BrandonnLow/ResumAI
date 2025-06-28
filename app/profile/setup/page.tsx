@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import PrivateRoute from '../../ui/components/PrivateRoute';
 import PageWrapper from '../../ui/components/PageWrapper';
 import { getInputClasses } from '../../ui/styles/theme';
+import { LoadingPage } from '../../ui/components/Loading';
 
 // Import form components
 import EducationForm from '../../ui/components/profile/forms/EducationForm';
@@ -747,9 +748,7 @@ export default function ProfileSetup() {
     if (loading && !profile.name) {
         return (
             <PrivateRoute>
-                <PageWrapper background="dark" className="min-h-screen flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400"></div>
-                </PageWrapper>
+                <LoadingPage text="Loading ..." />
             </PrivateRoute>
         );
     }

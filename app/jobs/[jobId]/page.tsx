@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import PrivateRoute from '../../ui/components/PrivateRoute';
 import ProfileCheck from '../../ui/components/ProfileCheck';
 import { getCardClasses, getInputClasses, getButtonClasses } from '../../ui/styles/theme';
+import { LoadingPage } from '../../ui/components/Loading';
 
 export default function JobDetail() {
     const params = useParams();
@@ -122,9 +123,7 @@ export default function JobDetail() {
         return (
             <PrivateRoute>
                 <ProfileCheck>
-                    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400"></div>
-                    </div>
+                    <LoadingPage text="Loading..." />
                 </ProfileCheck>
             </PrivateRoute>
         );

@@ -13,6 +13,7 @@ import {
 import { auth, db } from '../../Services/firebase/config';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getUserProfile } from '../../Services/firebase/firestore';
+import { LoadingPage } from '../components/Loading';
 
 interface AuthContextType {
     currentUser: User | null;
@@ -163,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {!loading ? children : <LoadingPage text="Initializing resuMate..." />}
         </AuthContext.Provider>
     );
 };
