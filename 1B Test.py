@@ -7,10 +7,8 @@ MODEL_DIR = "./model-finetuned-rtx4050"
 BASE_MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 MAX_LENGTH = 512
 TEMPERATURE = 0.7
-TOP_P = 0.9
 
 def load_finetuned_model():
-    """Load the fine-tuned model and tokenizer"""
     tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, trust_remote_code=True)
     
     
@@ -41,9 +39,7 @@ Provide detailed feedback on this interview answer. Analyze the response for:
 - Overall effectiveness
 
 Feedback:"""
-
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_LENGTH)
-    
     
     if torch.cuda.is_available():
         inputs = {k: v.cuda() for k, v in inputs.items()}
@@ -54,7 +50,7 @@ Feedback:"""
             **inputs,
             max_new_tokens=256,
             temperature=TEMPERATURE,
-            top_p=TOP_P,
+            top_p=0.9,
             do_sample=True,
             pad_token_id=tokenizer.eos_token_id,
             repetition_penalty=1.1
@@ -74,14 +70,8 @@ def main():
     skeleton = "Tell me about a time when you had to solve a technical challenge under pressure."
     userInput = """In my web development class, our team built a student portfolio platform and I was responsible for deployment and hosting. I set up the backend on EC2 with auto-scaling for our demo day when 200+ students would access it simultaneously. When our site crashed during initial testing, I quickly configured load balancing and database connection pooling, which allowed us to handle the traffic smoothly.
 """
-    
-    print(f"\nQuestion: {skeleton}")
-    print(f"\nAnswer: {userInput}")
-    print(f"\nGenerating feedback...")
-    
     feedback = generate_response(model, tokenizer, skeleton, userInput)
     
-    print(f"\nAI Feedback:\n{feedback}")
 
 if __name__ == "__main__":
     main()
