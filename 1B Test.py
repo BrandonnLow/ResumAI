@@ -71,6 +71,7 @@ def main():
     userInput = """In my web development class, our team built a student portfolio platform and I was responsible for deployment and hosting. I set up the backend on EC2 with auto-scaling for our demo day when 200+ students would access it simultaneously. When our site crashed during initial testing, I quickly configured load balancing and database connection pooling, which allowed us to handle the traffic smoothly.
 """
     feedback = generate_response(model, tokenizer, skeleton, userInput)
+    print(feedback)
     
 
 if __name__ == "__main__":
