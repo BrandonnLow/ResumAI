@@ -33,10 +33,10 @@ def generate_response(model, tokenizer, skeleton, userInput):
 Candidate Answer: {userInput}
 
 Provide detailed feedback on this interview answer. Analyze the response for:
-- Clarity and structure
-- Relevant examples and specifics
-- Areas for improvement
-- Overall effectiveness
+- Clarity
+- Insights
+- Effectiveness
+- How to improve
 
 Feedback:"""
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_LENGTH)
@@ -63,9 +63,7 @@ Feedback:"""
     return feedback
 
 def main():
-    print("Loading fine-tuned model...")
     model, tokenizer = load_finetuned_model()
-    print("Model loaded successfully!")
     
     skeleton = "Tell me about a time when you had to solve a technical challenge under pressure."
     userInput = """In my web development class, our team built a student portfolio platform and I was responsible for deployment and hosting. I set up the backend on EC2 with auto-scaling for our demo day when 200+ students would access it simultaneously. When our site crashed during initial testing, I quickly configured load balancing and database connection pooling, which allowed us to handle the traffic smoothly.
