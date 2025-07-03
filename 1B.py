@@ -12,14 +12,7 @@ from transformers import (
 from datasets import Dataset
 from peft import LoraConfig, get_peft_model
 
-# Default configuration
-MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-DATA_DIR = "./data"
-MAX_SEQ_LENGTH = 256
-BATCH_SIZE = 1
-GRADIENT_ACCUMULATION_STEPS = 4
-LEARNING_RATE = 1e-4
-EPOCHS = 1
+modelType = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 
 def prepare_dataset(data_dir, tokenizer, max_seq_length):
     text_files = glob.glob(os.path.join(data_dir, "*.txt"))
@@ -33,7 +26,7 @@ def prepare_dataset(data_dir, tokenizer, max_seq_length):
                     text = text[:max_seq_length * 10]
                 all_texts.append(text)
     
-    def tokenize_function(examples):
+    def tokenizeFunction(examples):
         results = tokenizer(
             examples["text"],
             truncation=True,
@@ -47,7 +40,7 @@ def prepare_dataset(data_dir, tokenizer, max_seq_length):
     
     dataset = Dataset.from_dict({"text": all_texts})
     tokenized_dataset = dataset.map(
-            tokenize_function,
+            tokenizeFunction,
             batched=True,
             batch_size=2,
             remove_columns=["text"],
@@ -56,13 +49,13 @@ def prepare_dataset(data_dir, tokenizer, max_seq_length):
     return tokenized_dataset.train_test_split(test_size=0.05, seed=42)
 
 def tokenizerFunction():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(modelType, use_fast=True, trust_remote_code=True)
     
     if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
     
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME,
+        modelType,
         trust_remote_code=True,
         torch_dtype=torch.float16,
         device_map="auto",
@@ -91,18 +84,18 @@ def main():
     os.makedirs("./model-finetuned-rtx4050", exist_ok=True)
     
     model, tokenizer = tokenizerFunction()
-    datasets = prepare_dataset(DATA_DIR, tokenizer, MAX_SEQ_LENGTH)
+    datasets = prepare_dataset('./data', tokenizer, 1000)
     
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     
     training_args = TrainingArguments(
         output_dir="./model-finetuned-rtx4050",
         overwrite_output_dir=True,
-        num_train_epochs=EPOCHS,
-        per_device_train_batch_size=BATCH_SIZE,
-        per_device_eval_batch_size=BATCH_SIZE,
-        gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
-        learning_rate=LEARNING_RATE,
+        num_train_epochs=1,
+        per_device_train_batch_size=1,
+        per_device_eval_batch_size=1,
+        gradient_accumulation_steps=4,
+        learning_rate=1e-4,
         weight_decay=0.01,
         warmup_steps=50,
         logging_steps=20,
