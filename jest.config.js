@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     testEnvironment: 'jest-environment-jsdom',
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/$1',
@@ -27,6 +27,23 @@ const customJestConfig = {
         '!app/**/loading.tsx',
         '!app/**/not-found.tsx',
     ],
+    // Ensure TypeScript files are processed
+    transform: {
+        '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+    },
+    // Handle module file extensions
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    // Add type checking
+    globals: {
+        'ts-jest': {
+            tsconfig: {
+                jsx: 'react-jsx',
+            },
+        },
+    },
+    // Clear mocks between tests
+    clearMocks: true,
+    restoreMocks: true,
 };
 
 module.exports = createJestConfig(customJestConfig);
