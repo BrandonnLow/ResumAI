@@ -2,14 +2,12 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
-
-MODEL_DIR = "./model-finetuned-rtx4050"
 BASE_MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-MAX_LENGTH = 512
-TEMPERATURE = 0.7
+MAX_LENGTH = 1000
+TEMPERATURE = 0.7 #how ballsy / creative this model can get
 
-def load_finetuned_model():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, trust_remote_code=True)
+def load_models():
+    tokenizer = AutoTokenizer.from_pretrained("./model-finetuned-rtx4050", trust_remote_code=True)
     
     
     base_model = AutoModelForCausalLM.from_pretrained(
@@ -21,7 +19,7 @@ def load_finetuned_model():
     )
     
     
-    model = PeftModel.from_pretrained(base_model, MODEL_DIR)
+    model = PeftModel.from_pretrained(base_model, "./model-finetuned-rtx4050")
     model.eval()
     
     return model, tokenizer
@@ -33,10 +31,10 @@ def generate_response(model, tokenizer, skeleton, userInput):
 Candidate Answer: {userInput}
 
 Provide detailed feedback on this interview answer. Analyze the response for:
-- Clarity and structure
-- Relevant examples and specifics
-- Areas for improvement
-- Overall effectiveness
+- Clarity
+- Insights
+- Effectiveness
+- How to improve
 
 Feedback:"""
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_LENGTH)
@@ -63,9 +61,7 @@ Feedback:"""
     return feedback
 
 def main():
-    print("Loading fine-tuned model...")
-    model, tokenizer = load_finetuned_model()
-    print("Model loaded successfully!")
+    model, tokenizer = load_models()
     
     skeleton = "Tell me about a time when you had to solve a technical challenge under pressure."
     userInput = """In my web development class, our team built a student portfolio platform and I was responsible for deployment and hosting. I set up the backend on EC2 with auto-scaling for our demo day when 200+ students would access it simultaneously. When our site crashed during initial testing, I quickly configured load balancing and database connection pooling, which allowed us to handle the traffic smoothly.
@@ -74,5 +70,5 @@ def main():
     print(feedback)
     
 
-if __name__ == "__main__":
+if __name__== "__main__":
     main()

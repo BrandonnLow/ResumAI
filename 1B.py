@@ -12,15 +12,7 @@ from transformers import (
 from datasets import Dataset
 from peft import LoraConfig, get_peft_model
 
-# Default configuration
-MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-OUTPUT_DIR = "./model-finetuned-rtx4050"
-DATA_DIR = "./data"
-MAX_SEQ_LENGTH = 256
-BATCH_SIZE = 1
-GRADIENT_ACCUMULATION_STEPS = 4
-LEARNING_RATE = 1e-4
-EPOCHS = 1
+modelType = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 
 def prepare_dataset(data_dir, tokenizer, max_seq_length):
     text_files = glob.glob(os.path.join(data_dir, "*.txt"))
@@ -34,7 +26,7 @@ def prepare_dataset(data_dir, tokenizer, max_seq_length):
                     text = text[:max_seq_length * 10]
                 all_texts.append(text)
     
-    def tokenize_function(examples):
+    def tokenizeFunction(examples):
         results = tokenizer(
             examples["text"],
             truncation=True,
@@ -48,22 +40,22 @@ def prepare_dataset(data_dir, tokenizer, max_seq_length):
     
     dataset = Dataset.from_dict({"text": all_texts})
     tokenized_dataset = dataset.map(
-        tokenize_function,
-        batched=True,
-        batch_size=2,
-        remove_columns=["text"],
+            tokenizeFunction,
+            batched=True,
+            batch_size=2,
+            remove_columns=["text"],
     )
     
     return tokenized_dataset.train_test_split(test_size=0.05, seed=42)
 
-def load_model_and_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True, trust_remote_code=True)
+def tokenizerFunction():
+    tokenizer = AutoTokenizer.from_pretrained(modelType, use_fast=True, trust_remote_code=True)
     
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+            tokenizer.pad_token = tokenizer.eos_token
     
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME,
+        modelType,
         trust_remote_code=True,
         torch_dtype=torch.float16,
         device_map="auto",
@@ -73,7 +65,6 @@ def load_model_and_tokenizer():
     
     model.gradient_checkpointing_enable()
     
-    # Setup LoRA
     peft_config = LoraConfig(
         r=4,
         lora_alpha=8,
@@ -87,24 +78,24 @@ def load_model_and_tokenizer():
     return model, tokenizer
 
 def main():
-    set_seed(42)
+    set_seed(33993)
     torch.cuda.empty_cache()
     
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs("./model-finetuned-rtx4050", exist_ok=True)
     
-    model, tokenizer = load_model_and_tokenizer()
-    datasets = prepare_dataset(DATA_DIR, tokenizer, MAX_SEQ_LENGTH)
+    model, tokenizer = tokenizerFunction()
+    datasets = prepare_dataset('./data', tokenizer, 1000)
     
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     
     training_args = TrainingArguments(
-        output_dir=OUTPUT_DIR,
+        output_dir="./model-finetuned-rtx4050",
         overwrite_output_dir=True,
-        num_train_epochs=EPOCHS,
-        per_device_train_batch_size=BATCH_SIZE,
-        per_device_eval_batch_size=BATCH_SIZE,
-        gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
-        learning_rate=LEARNING_RATE,
+        num_train_epochs=1,
+        per_device_train_batch_size=1,
+        per_device_eval_batch_size=1,
+        gradient_accumulation_steps=4,
+        learning_rate=1e-4,
         weight_decay=0.01,
         warmup_steps=50,
         logging_steps=20,
@@ -130,8 +121,8 @@ def main():
     )
     
     trainer.train()
-    trainer.save_model(OUTPUT_DIR)
-    tokenizer.save_pretrained(OUTPUT_DIR)
+    trainer.save_model("./model-finetuned-rtx4050")
+    tokenizer.save_pretrained("./model-finetuned-rtx4050")
 
 if __name__ == "__main__":
     main()
