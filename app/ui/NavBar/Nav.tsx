@@ -121,7 +121,7 @@ export default function Nav() {
                             </div>
                         ) : (
                             <button
-                                className="bg-gradient-to-r from-gray-100 to-gray-400 text-gray-700 font-semibold px-4 pr-2 rounded-full hover:from-gray-200 hover:to-gray-500 transition-all duration-200 transform hover:scale-105"
+                                className="bg-gradient-to-r from-gray-100 to-gray-400 text-gray-700 font-semibold px-4 rounded-full hover:from-gray-200 hover:to-gray-500 transition-all duration-200 transform hover:scale-105"
                                 onClick={() => router.push('/login')}
                             >
                                 Login
