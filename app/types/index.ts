@@ -110,3 +110,31 @@ export interface PracticeSession {
     currentQuestionIndex: number;
     createdAt: Date;
 }
+
+// Goals types
+export interface WeeklyGoal {
+    id: string;
+    userId: string;
+    weekStartDate: string;
+    weekEndDate: string;
+    targetQuestions: number;
+    currentProgress: number;
+    isCompleted: boolean;
+    completedDate?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface GoalStats {
+    currentWeekProgress: number;
+    currentWeekTarget: number;
+    weeklyStreak: number;
+    totalWeeksCompleted: number;
+    averageCompletion: number;
+    bestWeek: number;
+}
+
+export interface WeeklyProgress {
+    date: string;
+    count: number;
+}

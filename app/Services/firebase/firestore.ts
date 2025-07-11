@@ -11,7 +11,8 @@ import {
     where,
     orderBy,
     deleteDoc,
-    serverTimestamp
+    serverTimestamp,
+    Timestamp
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -20,7 +21,10 @@ import {
     Job,
     Question,
     PracticeSession,
-    QuestionCategory
+    QuestionCategory,
+    WeeklyGoal,
+    GoalStats,
+    WeeklyProgress
 } from '../../types';
 import { JobStatus } from '../../types';
 
@@ -202,7 +206,16 @@ export const saveAnswer = async (answer: Omit<Answer, 'id' | 'createdAt' | 'upda
     }
 
     const answersRef = collection(db, 'answers');
-    return addDoc(answersRef, cleanAnswer);
+    const result = await addDoc(answersRef, cleanAnswer);
+
+    // Update weekly goal progress after saving answer
+    try {
+        await updateWeeklyGoalProgress(answer.userId);
+    } catch (error) {
+        console.error('Error updating weekly goal progress:', error);
+    }
+
+    return result;
 };
 
 export const getAnswers = async (userId: string): Promise<Answer[]> => {
@@ -374,4 +387,283 @@ export const updateJobStatus = async (jobId: string, status: JobStatus) => {
         status,
         updatedAt: serverTimestamp()
     });
+};
+
+// Goals Functions
+
+// Helper function to get the start of the week (Monday)
+export const getWeekStart = (date: Date = new Date()): Date => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const monday = new Date(d.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+};
+
+// Helper function to get the end of the week (Sunday)
+export const getWeekEnd = (date: Date = new Date()): Date => {
+    const weekStart = getWeekStart(date);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    return weekEnd;
+};
+
+// Create or update weekly goal
+export const createOrUpdateWeeklyGoal = async (
+    userId: string,
+    targetQuestions: number,
+    weekStart?: Date
+): Promise<string> => {
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
+
+    if (targetQuestions < 1) {
+        throw new Error('Target questions must be at least 1');
+    }
+
+    const currentWeekStart = weekStart || getWeekStart();
+    const currentWeekEnd = getWeekEnd(currentWeekStart);
+    const weekStartISO = currentWeekStart.toISOString();
+    const weekEndISO = currentWeekEnd.toISOString();
+
+    // Check if goal already exists for this week
+    const existingGoal = await getCurrentWeekGoal(userId, currentWeekStart);
+
+    if (existingGoal) {
+        // Update existing goal
+        const goalRef = doc(db, 'weekly_goals', existingGoal.id);
+        await updateDoc(goalRef, {
+            targetQuestions,
+            updatedAt: serverTimestamp()
+        });
+        return existingGoal.id;
+    } else {
+        // Create new goal
+        const goalsRef = collection(db, 'weekly_goals');
+        const newGoal = await addDoc(goalsRef, {
+            userId,
+            weekStartDate: weekStartISO,
+            weekEndDate: weekEndISO,
+            targetQuestions,
+            currentProgress: 0,
+            isCompleted: false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        return newGoal.id;
+    }
+};
+
+// Get current week's goal
+export const getCurrentWeekGoal = async (userId: string, weekStart?: Date): Promise<WeeklyGoal | null> => {
+    try {
+        const currentWeekStart = weekStart || getWeekStart();
+        const weekStartISO = currentWeekStart.toISOString();
+
+        const goalsQuery = query(
+            collection(db, 'weekly_goals'),
+            where('userId', '==', userId),
+            where('weekStartDate', '==', weekStartISO)
+        );
+
+        const goalsSnap = await getDocs(goalsQuery);
+
+        if (!goalsSnap.empty) {
+            const doc = goalsSnap.docs[0];
+            return {
+                id: doc.id,
+                ...doc.data()
+            } as WeeklyGoal;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error fetching current week goal:', error);
+        return null;
+    }
+};
+
+// Get all weekly goals for a user
+export const getUserWeeklyGoals = async (userId: string): Promise<WeeklyGoal[]> => {
+    try {
+        const goalsQuery = query(
+            collection(db, 'weekly_goals'),
+            where('userId', '==', userId),
+            orderBy('weekStartDate', 'desc')
+        );
+
+        const goalsSnap = await getDocs(goalsQuery);
+        return goalsSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as WeeklyGoal));
+    } catch (error) {
+        console.error('Error fetching user weekly goals:', error);
+        return [];
+    }
+};
+
+// Update goal progress based on answers count for the week
+export const updateWeeklyGoalProgress = async (userId: string, weekStart?: Date): Promise<void> => {
+    try {
+        const currentWeekStart = weekStart || getWeekStart();
+        const currentWeekEnd = getWeekEnd(currentWeekStart);
+
+        // Get current week's goal
+        const currentGoal = await getCurrentWeekGoal(userId, currentWeekStart);
+        if (!currentGoal) return;
+
+        // Count answers for this week
+        const weeklyAnswersCount = await getAnswersCountForWeek(userId, currentWeekStart, currentWeekEnd);
+
+        // Update goal progress
+        const goalRef = doc(db, 'weekly_goals', currentGoal.id);
+        const isCompleted = weeklyAnswersCount >= currentGoal.targetQuestions;
+
+        const updateData: any = {
+            currentProgress: weeklyAnswersCount,
+            isCompleted,
+            updatedAt: serverTimestamp()
+        };
+
+        // If just completed, add completion date
+        if (isCompleted && !currentGoal.isCompleted) {
+            updateData.completedDate = serverTimestamp();
+        }
+
+        await updateDoc(goalRef, updateData);
+    } catch (error) {
+        console.error('Error updating weekly goal progress:', error);
+    }
+};
+
+// Get answers count for a specific week
+export const getAnswersCountForWeek = async (
+    userId: string,
+    weekStart: Date,
+    weekEnd: Date
+): Promise<number> => {
+    try {
+        console.log('Getting answers count for week:', {
+            userId,
+            weekStart: weekStart.toISOString(),
+            weekEnd: weekEnd.toISOString()
+        });
+
+        // Convert JavaScript dates to Firestore Timestamps for proper comparison
+        const weekStartTimestamp = Timestamp.fromDate(weekStart);
+        const weekEndTimestamp = Timestamp.fromDate(weekEnd);
+
+        const answersQuery = query(
+            collection(db, 'answers'),
+            where('userId', '==', userId),
+            where('createdAt', '>=', weekStartTimestamp),
+            where('createdAt', '<=', weekEndTimestamp)
+        );
+
+        const answersSnap = await getDocs(answersQuery);
+        const count = answersSnap.size;
+
+        console.log(`Found ${count} answers for week ${weekStart.toISOString().split('T')[0]}`);
+
+        return count;
+    } catch (error) {
+        console.error('Error getting answers count for week:', error);
+        return 0;
+    }
+};
+
+// Get goal statistics
+export const getGoalStats = async (userId: string): Promise<GoalStats> => {
+    try {
+        const goals = await getUserWeeklyGoals(userId);
+        const currentWeekGoal = await getCurrentWeekGoal(userId);
+
+        // Calculate stats
+        const completedGoals = goals.filter(goal => goal.isCompleted);
+        const totalWeeksCompleted = completedGoals.length;
+
+        // Calculate weekly streak (consecutive weeks from current)
+        let weeklyStreak = 0;
+        const sortedGoals = goals.sort((a, b) => new Date(b.weekStartDate).getTime() - new Date(a.weekStartDate).getTime());
+
+        for (const goal of sortedGoals) {
+            if (goal.isCompleted) {
+                weeklyStreak++;
+            } else {
+                break;
+            }
+        }
+
+        // Calculate average completion rate
+        const averageCompletion = goals.length > 0 ?
+            (completedGoals.reduce((sum, goal) => sum + (goal.currentProgress / goal.targetQuestions), 0) / goals.length) * 100 : 0;
+
+        // Find best week
+        const bestWeek = goals.length > 0 ?
+            Math.max(...goals.map(goal => goal.currentProgress)) : 0;
+
+        return {
+            currentWeekProgress: currentWeekGoal?.currentProgress || 0,
+            currentWeekTarget: currentWeekGoal?.targetQuestions || 0,
+            weeklyStreak,
+            totalWeeksCompleted,
+            averageCompletion: Math.round(averageCompletion),
+            bestWeek
+        };
+    } catch (error) {
+        console.error('Error getting goal stats:', error);
+        return {
+            currentWeekProgress: 0,
+            currentWeekTarget: 0,
+            weeklyStreak: 0,
+            totalWeeksCompleted: 0,
+            averageCompletion: 0,
+            bestWeek: 0
+        };
+    }
+};
+
+// Get weekly progress data for charts
+export const getWeeklyProgressData = async (userId: string, weeksBack: number = 12): Promise<WeeklyProgress[]> => {
+    try {
+        console.log('Getting weekly progress data for:', { userId, weeksBack });
+
+        const progressData: WeeklyProgress[] = [];
+        const currentDate = new Date();
+
+        // Start from the current week and go back
+        for (let i = weeksBack - 1; i >= 0; i--) {
+            const weekStart = new Date(currentDate);
+            weekStart.setDate(currentDate.getDate() - (i * 7));
+
+            // Adjust to Monday (start of week)
+            const dayOfWeek = weekStart.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so 6 days back to Monday
+            weekStart.setDate(weekStart.getDate() - daysToMonday);
+            weekStart.setHours(0, 0, 0, 0);
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+
+            console.log(`Processing week ${i}: ${weekStart.toISOString()} to ${weekEnd.toISOString()}`);
+
+            const count = await getAnswersCountForWeek(userId, weekStart, weekEnd);
+
+            progressData.push({
+                date: weekStart.toISOString().split('T')[0], // YYYY-MM-DD format
+                count
+            });
+        }
+
+        console.log('Final progress data:', progressData);
+        return progressData;
+    } catch (error) {
+        console.error('Error getting weekly progress data:', error);
+        return [];
+    }
 };
