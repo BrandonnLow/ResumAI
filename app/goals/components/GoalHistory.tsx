@@ -3,6 +3,7 @@
 import React from 'react';
 import { WeeklyGoal } from '../../types';
 import { getCardClasses } from '../../ui/styles/theme';
+import { getWeekStart } from '../../Services/firebase/firestore';
 
 interface GoalHistoryProps {
     history: WeeklyGoal[];
@@ -68,6 +69,12 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
         return 'text-gray-400';
     };
 
+    const isCurrentWeekGoal = (goal: WeeklyGoal) => {
+        const currentWeekStart = getWeekStart();
+        const goalWeekStart = new Date(goal.weekStartDate);
+        return goalWeekStart.toDateString() === currentWeekStart.toDateString();
+    };
+
     return (
         <div className={getCardClasses()}>
             <div className="px-4 py-5 sm:p-6">
@@ -102,7 +109,7 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
                     <div className="space-y-4 max-h-96 overflow-y-auto">
                         {history.map((goal, index) => {
                             const completionPercentage = getCompletionPercentage(goal.currentProgress, goal.targetQuestions);
-                            const isCurrentWeek = index === 0;
+                            const isCurrentWeek = isCurrentWeekGoal(goal);
 
                             return (
                                 <div

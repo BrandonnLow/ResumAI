@@ -28,7 +28,7 @@ export default function WeeklyChart({ data }: WeeklyChartProps) {
         );
     }
 
-    const maxValue = Math.max(...data.map(d => d.count), 1);
+    const maxValue = Math.max(...data.map(d => d.count), 0);
     const totalQuestions = data.reduce((sum, d) => sum + d.count, 0);
 
     const formatDate = (dateString: string) => {

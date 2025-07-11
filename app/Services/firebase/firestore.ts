@@ -529,9 +529,13 @@ export const updateWeeklyGoalProgress = async (userId: string, weekStart?: Date)
             updatedAt: serverTimestamp()
         };
 
-        // If just completed, add completion date
+        // Handle completion date logic
         if (isCompleted && !currentGoal.isCompleted) {
+            // Just completed - add completion date
             updateData.completedDate = serverTimestamp();
+        } else if (!isCompleted && currentGoal.isCompleted) {
+            // No longer completed (e.g., target was increased) - reset completion date
+            updateData.completedDate = null;
         }
 
         await updateDoc(goalRef, updateData);
@@ -600,7 +604,7 @@ export const getGoalStats = async (userId: string): Promise<GoalStats> => {
 
         // Calculate average completion rate
         const averageCompletion = goals.length > 0 ?
-            (completedGoals.reduce((sum, goal) => sum + (goal.currentProgress / goal.targetQuestions), 0) / goals.length) * 100 : 0;
+            (goals.reduce((sum, goal) => sum + (goal.currentProgress / goal.targetQuestions), 0) / goals.length) * 100 : 0;
 
         // Find best week
         const bestWeek = goals.length > 0 ?

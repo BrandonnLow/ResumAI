@@ -40,9 +40,9 @@ export default function GoalProgressBar() {
         return null; // Don't show anything if no goal is set
     }
 
-    const progressPercentage = Math.min((currentGoal.currentProgress / currentGoal.targetQuestions) * 100, 100);
-    const isCompleted = currentGoal.isCompleted;
-    const remainingQuestions = Math.max(0, currentGoal.targetQuestions - currentGoal.currentProgress);
+    const { currentProgress, targetQuestions, isCompleted } = currentGoal;
+    const progressPercentage = Math.min((currentProgress / targetQuestions) * 100, 100);
+    const remainingQuestions = Math.max(0, targetQuestions - currentProgress);
 
     return (
         <div className={`${getCardClasses()} mt-8`}>
@@ -73,8 +73,8 @@ export default function GoalProgressBar() {
                     <div className="w-full bg-gray-600 rounded-full h-3 overflow-hidden">
                         <div
                             className={`h-full rounded-full transition-all duration-500 ease-out ${isCompleted
-                                    ? 'bg-gradient-to-r from-green-500 to-green-600'
-                                    : 'bg-gradient-to-r from-blue-500 to-purple-600'
+                                ? 'bg-gradient-to-r from-green-500 to-green-600'
+                                : 'bg-gradient-to-r from-blue-500 to-purple-600'
                                 }`}
                             style={{ width: `${progressPercentage}%` }}
                         />
