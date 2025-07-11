@@ -13,6 +13,7 @@ const allNavigation = [
     { name: 'Dashboard', href: '/dashboard', current: false },
     { name: 'Practice', href: '/practice/setup', current: false },
     { name: 'Answers', href: '/answers', current: false },
+    { name: 'Goals', href: '/goals', current: false },
     { name: 'Jobs', href: '/jobs', current: false },
     { name: 'Profile', href: '/profile', current: false },
 ];

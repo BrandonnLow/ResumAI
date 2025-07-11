@@ -16,12 +16,12 @@ import QuickActions from './components/QuickActions';
 import RecentAnswers from './components/RecentAnswers';
 import JobApplications from './components/JobApplications';
 import ProgressStats from './components/ProgressStats';
+import GoalProgressBar from './components/GoalProgressBar';
 
 export default function Dashboard() {
     const { currentUser, profileComplete } = useAuth();
     const router = useRouter();
 
-    // Use custom dashboard data hook
     const {
         profile,
         profileError,
@@ -57,7 +57,7 @@ export default function Dashboard() {
         }
     };
 
-    // Get display name with multiple fallbacks
+    // Get display name with fallbacks
     const getDisplayName = () => {
         if (profile?.name && profile.name.trim() !== '') {
             return profile.name;
@@ -162,6 +162,9 @@ export default function Dashboard() {
 
                         {/* Progress Stats */}
                         <ProgressStats allAnswers={allAnswers} jobs={jobs} />
+
+                        {/* Goal Progress Bar */}
+                        <GoalProgressBar />
                     </div>
                 </div>
             </ProfileCheck>
