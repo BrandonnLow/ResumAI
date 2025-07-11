@@ -8,18 +8,22 @@ import {
     createOrUpdateWeeklyGoal,
     updateWeeklyGoalProgress,
     getGoalStats,
+    getUserWeeklyGoals,
+    getWeeklyProgressData,
     getWeekStart,
     getWeekEnd
 } from '../Services/firebase/firestore';
-import { WeeklyGoal, GoalStats } from '../types';
+import { WeeklyGoal, GoalStats, WeeklyProgress } from '../types';
 import toast from 'react-hot-toast';
 import PrivateRoute from '../ui/components/PrivateRoute';
 import ProfileCheck from '../ui/components/ProfileCheck';
-import { getCardClasses, getButtonClasses } from '../ui/styles/theme';
+import { getCardClasses, getInputClasses, getButtonClasses } from '../ui/styles/theme';
 import { LoadingPage } from '../ui/components/Loading';
 import GoalProgress from './components/GoalProgress';
 import GoalSettings from './components/GoalSettings';
 import GoalStat from './components/GoalStats';
+import WeeklyChart from './components/WeeklyChart';
+import GoalHistory from './components/GoalHistory';
 
 export default function Goals() {
     const { currentUser } = useAuth();
@@ -34,6 +38,8 @@ export default function Goals() {
         averageCompletion: 0,
         bestWeek: 0
     });
+    const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>([]);
+    const [goalHistory, setGoalHistory] = useState<WeeklyGoal[]>([]);
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
 
@@ -47,14 +53,18 @@ export default function Goals() {
             // Update progress first to ensure we have latest data
             await updateWeeklyGoalProgress(currentUser.uid);
 
-            // Fetch data in parallel
-            const [goal, stats] = await Promise.all([
+            // Fetch all data in parallel
+            const [goal, stats, progressData, history] = await Promise.all([
                 getCurrentWeekGoal(currentUser.uid),
-                getGoalStats(currentUser.uid)
+                getGoalStats(currentUser.uid),
+                getWeeklyProgressData(currentUser.uid, 12),
+                getUserWeeklyGoals(currentUser.uid)
             ]);
 
             setCurrentGoal(goal);
             setGoalStats(stats);
+            setWeeklyProgress(progressData);
+            setGoalHistory(history.slice(0, 10)); // Show last 10 weeks
         } catch (error) {
             console.error('Error fetching goal data:', error);
             toast.error('Failed to load goal data. Please try again.');
@@ -161,16 +171,46 @@ export default function Goals() {
                         {/* Goal Statistics */}
                         <GoalStat stats={goalStats} />
 
-                        {/* Coming Soon Placeholder */}
-                        <div className={`${getCardClasses()} text-center py-8`}>
-                            <div className="text-gray-400">
-                                <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                <p className="text-lg font-medium mb-2">More features coming soon!</p>
-                                <p className="text-sm">Visual charts and detailed history tracking will be added in future updates.</p>
-                            </div>
+                        {/* Weekly Chart and History */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                            <WeeklyChart data={weeklyProgress} />
+                            <GoalHistory history={goalHistory} onRefresh={fetchGoalData} />
                         </div>
+
+                        {/* Motivational Section */}
+                        {currentGoal && (
+                            <div className={`${getCardClasses()} mt-8`}>
+                                <div className="px-4 py-5 sm:p-6">
+                                    <div className="text-center">
+                                        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-medium text-white mb-2">
+                                            {currentGoal.isCompleted
+                                                ? "🎉 Congratulations!"
+                                                : "Keep Going!"}
+                                        </h3>
+                                        <p className="text-gray-300">
+                                            {currentGoal.isCompleted
+                                                ? `You've completed your weekly goal of ${currentGoal.targetQuestions} questions! Great job staying consistent.`
+                                                : `You're ${currentGoal.targetQuestions - currentGoal.currentProgress} questions away from your weekly goal. Every practice session counts!`}
+                                        </p>
+                                        {!currentGoal.isCompleted && (
+                                            <div className="mt-4">
+                                                <button
+                                                    onClick={() => router.push('/practice/setup')}
+                                                    className={`${getButtonClasses('primary')} transform transition-all hover:scale-105`}
+                                                >
+                                                    Continue Practicing
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Goal Settings Modal */}

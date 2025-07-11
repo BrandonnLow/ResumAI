@@ -76,15 +76,15 @@ export default function GoalStat({ stats }: GoalStatsProps) {
         if (stats.weeklyStreak >= 4) {
             return "🔥 Amazing streak! You're on fire!";
         } else if (stats.weeklyStreak >= 2) {
-            return "⚡ Great consistency! Keep it up!";
+            return "⭐ Great consistency! Keep it up!";
         } else if (stats.totalWeeksCompleted >= 5) {
-            return "🎯 Strong dedication to improvement!";
+            return "💪 Strong dedication to improvement!";
         } else if (stats.averageCompletion >= 80) {
-            return "🎉 Excellent completion rate!";
+            return "🎯 Excellent completion rate!";
         } else if (stats.currentWeekProgress > 0) {
             return "🚀 Every question counts. Keep going!";
         } else {
-            return "🌟 Ready to start your journey?";
+            return "💫 Ready to start your journey?";
         }
     };
 
@@ -152,7 +152,7 @@ export default function GoalStat({ stats }: GoalStatsProps) {
                         )}
                         {stats.averageCompletion >= 90 && (
                             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-900/20 text-blue-300 border border-blue-600/30">
-                                🎉 Perfectionist
+                                🎯 Perfectionist
                             </div>
                         )}
                         {stats.bestWeek >= 20 && (
@@ -163,54 +163,6 @@ export default function GoalStat({ stats }: GoalStatsProps) {
                         {stats.totalWeeksCompleted === 0 && stats.currentWeekProgress === 0 && (
                             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
                                 🌱 Getting Started
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Milestone Progress */}
-                <div className="mt-6 bg-gray-700/50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-300 mb-3">Next Milestones</h4>
-                    <div className="space-y-3">
-                        {/* Streak Milestone */}
-                        {stats.weeklyStreak < 5 && (
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center">
-                                        <span className="text-xs text-white font-bold">{stats.weeklyStreak}</span>
-                                    </div>
-                                    <span className="text-sm text-gray-300">5-Week Streak</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-16 bg-gray-600 rounded-full h-2">
-                                        <div
-                                            className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${Math.min((stats.weeklyStreak / 5) * 100, 100)}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-xs text-gray-400">{5 - stats.weeklyStreak} left</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Completion Milestone */}
-                        {stats.totalWeeksCompleted < 10 && (
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                                        <span className="text-xs text-white font-bold">{stats.totalWeeksCompleted}</span>
-                                    </div>
-                                    <span className="text-sm text-gray-300">10 Goals Completed</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-16 bg-gray-600 rounded-full h-2">
-                                        <div
-                                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${Math.min((stats.totalWeeksCompleted / 10) * 100, 100)}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-xs text-gray-400">{10 - stats.totalWeeksCompleted} left</span>
-                                </div>
                             </div>
                         )}
                     </div>

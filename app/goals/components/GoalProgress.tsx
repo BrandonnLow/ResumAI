@@ -152,53 +152,6 @@ export default function GoalProgress({ currentGoal, onSetGoal, onStartPractice }
                         </div>
                     </div>
                 )}
-
-                {/* Motivational Message for In-Progress Goals */}
-                {!isCompleted && currentGoal.currentProgress > 0 && (
-                    <div className="mt-6 bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
-                        <div className="text-center">
-                            <h3 className="text-lg font-medium text-blue-200 mb-2">
-                                You're making great progress! 🚀
-                            </h3>
-                            <p className="text-blue-300">
-                                {remainingQuestions === 1
-                                    ? "Just 1 more question to reach your goal!"
-                                    : `${remainingQuestions} more questions to reach your weekly goal. Keep it up!`
-                                }
-                            </p>
-                            <div className="mt-4">
-                                <button
-                                    onClick={onStartPractice}
-                                    className={`${getButtonClasses('primary')} transform transition-all hover:scale-105`}
-                                >
-                                    Continue Practicing
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Encouragement for Zero Progress */}
-                {!isCompleted && currentGoal.currentProgress === 0 && (
-                    <div className="mt-6 bg-purple-900/20 border border-purple-600/30 rounded-lg p-4">
-                        <div className="text-center">
-                            <h3 className="text-lg font-medium text-purple-200 mb-2">
-                                Ready to start your week? 💪
-                            </h3>
-                            <p className="text-purple-300">
-                                Your goal of {currentGoal.targetQuestions} questions is waiting. Every expert was once a beginner!
-                            </p>
-                            <div className="mt-4">
-                                <button
-                                    onClick={onStartPractice}
-                                    className={`${getButtonClasses('primary')} transform transition-all hover:scale-105`}
-                                >
-                                    Start First Question
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
