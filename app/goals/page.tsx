@@ -7,10 +7,11 @@ import {
     getCurrentWeekGoal,
     createOrUpdateWeeklyGoal,
     updateWeeklyGoalProgress,
+    getGoalStats,
     getWeekStart,
     getWeekEnd
 } from '../Services/firebase/firestore';
-import { WeeklyGoal } from '../types';
+import { WeeklyGoal, GoalStats } from '../types';
 import toast from 'react-hot-toast';
 import PrivateRoute from '../ui/components/PrivateRoute';
 import ProfileCheck from '../ui/components/ProfileCheck';
@@ -18,16 +19,25 @@ import { getCardClasses, getButtonClasses } from '../ui/styles/theme';
 import { LoadingPage } from '../ui/components/Loading';
 import GoalProgress from './components/GoalProgress';
 import GoalSettings from './components/GoalSettings';
+import GoalStat from './components/GoalStats';
 
 export default function Goals() {
     const { currentUser } = useAuth();
     const router = useRouter();
 
     const [currentGoal, setCurrentGoal] = useState<WeeklyGoal | null>(null);
+    const [goalStats, setGoalStats] = useState<GoalStats>({
+        currentWeekProgress: 0,
+        currentWeekTarget: 0,
+        weeklyStreak: 0,
+        totalWeeksCompleted: 0,
+        averageCompletion: 0,
+        bestWeek: 0
+    });
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
 
-    // Fetch current goal
+    // Fetch all goal data
     const fetchGoalData = async () => {
         if (!currentUser) return;
 
@@ -37,9 +47,14 @@ export default function Goals() {
             // Update progress first to ensure we have latest data
             await updateWeeklyGoalProgress(currentUser.uid);
 
-            // Fetch current goal
-            const goal = await getCurrentWeekGoal(currentUser.uid);
+            // Fetch data in parallel
+            const [goal, stats] = await Promise.all([
+                getCurrentWeekGoal(currentUser.uid),
+                getGoalStats(currentUser.uid)
+            ]);
+
             setCurrentGoal(goal);
+            setGoalStats(stats);
         } catch (error) {
             console.error('Error fetching goal data:', error);
             toast.error('Failed to load goal data. Please try again.');
@@ -143,6 +158,9 @@ export default function Goals() {
                             onStartPractice={() => router.push('/practice/setup')}
                         />
 
+                        {/* Goal Statistics */}
+                        <GoalStat stats={goalStats} />
+
                         {/* Coming Soon Placeholder */}
                         <div className={`${getCardClasses()} text-center py-8`}>
                             <div className="text-gray-400">
@@ -150,7 +168,7 @@ export default function Goals() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                                 <p className="text-lg font-medium mb-2">More features coming soon!</p>
-                                <p className="text-sm">Statistics, charts, and history tracking will be added in future updates.</p>
+                                <p className="text-sm">Visual charts and detailed history tracking will be added in future updates.</p>
                             </div>
                         </div>
                     </div>
