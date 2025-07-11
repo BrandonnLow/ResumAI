@@ -16,6 +16,7 @@ import PrivateRoute from '../ui/components/PrivateRoute';
 import ProfileCheck from '../ui/components/ProfileCheck';
 import { getCardClasses, getButtonClasses } from '../ui/styles/theme';
 import { LoadingPage } from '../ui/components/Loading';
+import GoalProgress from './components/GoalProgress';
 import GoalSettings from './components/GoalSettings';
 
 export default function Goals() {
@@ -135,77 +136,12 @@ export default function Goals() {
                     </div>
 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        {/* Main Goal Display */}
-                        {!currentGoal ? (
-                            <div className={`${getCardClasses()} mb-8`}>
-                                <div className="px-4 py-8 sm:p-8 text-center">
-                                    <div className="w-20 h-20 mx-auto mb-6 bg-blue-900/20 border border-blue-600/30 rounded-full flex items-center justify-center">
-                                        <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                        </svg>
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-white mb-4">Set Your Weekly Goal</h2>
-                                    <p className="text-gray-300 mb-6 max-w-md mx-auto">
-                                        Start tracking your interview practice progress by setting a weekly goal.
-                                        Consistent practice is key to improving your interview skills!
-                                    </p>
-                                    <div className="space-y-4">
-                                        <button
-                                            onClick={() => setShowSettings(true)}
-                                            className={`${getButtonClasses('primary')} px-8 py-3 text-base transform transition-all hover:scale-105`}
-                                        >
-                                            Set Weekly Goal
-                                        </button>
-                                        <div className="text-sm text-gray-400">
-                                            <p>💡 We recommend starting with 5-10 questions per week</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className={`${getCardClasses()} mb-8`}>
-                                <div className="px-4 py-6 sm:p-8">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-white">This Week's Goal</h2>
-                                            <p className="text-gray-400 mt-1">
-                                                Target: {currentGoal.targetQuestions} questions
-                                            </p>
-                                        </div>
-                                        <div className="mt-4 sm:mt-0">
-                                            <button
-                                                onClick={() => setShowSettings(true)}
-                                                className={getButtonClasses('secondary')}
-                                            >
-                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                                Edit Goal
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-gray-700/50 rounded-lg p-6 border border-gray-600">
-                                        <div className="text-center">
-                                            <div className="text-4xl font-bold text-blue-400 mb-2">
-                                                {currentGoal.currentProgress}/{currentGoal.targetQuestions}
-                                            </div>
-                                            <p className="text-gray-300">
-                                                Questions completed this week
-                                            </p>
-                                            {currentGoal.isCompleted && (
-                                                <div className="mt-4 inline-flex items-center px-4 py-2 rounded-full bg-green-900/20 text-green-300 border border-green-600/30">
-                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    Goal Completed!
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {/* Main Goal Progress */}
+                        <GoalProgress
+                            currentGoal={currentGoal}
+                            onSetGoal={() => setShowSettings(true)}
+                            onStartPractice={() => router.push('/practice/setup')}
+                        />
 
                         {/* Coming Soon Placeholder */}
                         <div className={`${getCardClasses()} text-center py-8`}>
@@ -214,7 +150,7 @@ export default function Goals() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                                 <p className="text-lg font-medium mb-2">More features coming soon!</p>
-                                <p className="text-sm">Progress tracking, statistics, and charts will be added in future updates.</p>
+                                <p className="text-sm">Statistics, charts, and history tracking will be added in future updates.</p>
                             </div>
                         </div>
                     </div>
