@@ -19,6 +19,7 @@ import PrivateRoute from '../../../ui/components/PrivateRoute';
 import ProfileCheck from '../../../ui/components/ProfileCheck';
 import { getCardClasses, getInputClasses, getButtonClasses } from '../../../ui/styles/theme';
 import Loading, { LoadingPage } from '../../../ui/components/Loading';
+import VoiceEmotionRecorder from '@/app/ui/components/recordButton/recordButton';
 
 export default function PracticeSession() {
     const params = useParams();
@@ -543,6 +544,7 @@ export default function PracticeSession() {
 
                                 {!feedback && (
                                     <div className="flex justify-end">
+                                        <VoiceEmotionRecorder setUserAnswer={setUserAnswer} />
                                         <button
                                             type="button"
                                             onClick={requestFeedback}
