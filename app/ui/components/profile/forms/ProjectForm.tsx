@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Project } from '../../../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { getCardClasses, getInputClasses, getButtonClasses } from '../../../styles/theme';
 
 interface ProjectFormProps {
     projects: Project[];
@@ -112,7 +113,7 @@ export default function ProjectForm({
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                     />
                                 </div>
                             </div>
@@ -129,7 +130,7 @@ export default function ProjectForm({
                                         value={formData.description}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses('textarea')} block w-full sm:text-sm rounded-md`}
                                         placeholder="• Developed a feature that...&#10;• Implemented algorithms to...&#10;• Designed and built..."
                                     />
                                 </div>
@@ -147,7 +148,7 @@ export default function ProjectForm({
                                         value={formData.technologiesStr}
                                         onChange={handleInputChange}
                                         required
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                         placeholder="React, Node.js, Firebase, TypeScript"
                                     />
                                 </div>
@@ -164,7 +165,7 @@ export default function ProjectForm({
                                         id="link"
                                         value={formData.link || ''}
                                         onChange={handleInputChange}
-                                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400"
+                                        className={`${getInputClasses()} block w-full sm:text-sm rounded-md`}
                                         placeholder="https://github.com/yourusername/project"
                                     />
                                 </div>
@@ -183,13 +184,13 @@ export default function ProjectForm({
                                     });
                                     setEditIndex(null);
                                 }}
-                                className="bg-gray-700 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-3"
+                                className={`${getButtonClasses('secondary')} mr-3`}
                             >
                                 Clear
                             </button>
                             <button
                                 type="submit"
-                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className={getButtonClasses('primary')}
                             >
                                 {editIndex !== null ? 'Update' : 'Add'} Project
                             </button>
@@ -249,7 +250,7 @@ export default function ProjectForm({
                                             <button
                                                 type="button"
                                                 onClick={() => onRemove(index)}
-                                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-300 bg-red-900/20 hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                className={getButtonClasses('danger')}
                                             >
                                                 Remove
                                             </button>
