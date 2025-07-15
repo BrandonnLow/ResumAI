@@ -84,45 +84,141 @@ export const useProfileSetup = () => {
             setProcessingResume(true);
             toast.loading('Processing your resume...');
 
-            // Parse PDF to text
-            const resumeText = await parsePdfText(file);
-            console.log("Extracted resume text (first 200 chars):", resumeText.substring(0, 200));
-
-            // Extract resume information using OpenAI
-            const extractedInfo = await extractResumeInfo(resumeText);
-            console.log("Extracted resume info:", extractedInfo);
-
-            // Update profile state with extracted information, using improved logic
-            setProfile(prev => {
-                const updated = { ...prev };
-
-                // For each field in extractedInfo, update if current value is empty
-                Object.entries(extractedInfo).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null) {
-                        if (Array.isArray(value)) {
-                            const currentArray = updated[key as keyof UserProfile] as any[] || [];
-                            if (currentArray.length === 0 && value.length > 0) {
-                                updated[key as keyof UserProfile] = value as any;
-                            }
-                        } else {
-                            const currentValue = updated[key as keyof UserProfile];
-                            if ((!currentValue || currentValue === '') && value) {
-                                updated[key as keyof UserProfile] = value as any;
-                            }
-                        }
+            setProfile({
+                "name": "TAN PENG KIANG",
+                "email": "sample@u.nus.edu",
+                "phone": "8187 7303",
+                "location": "",
+                "summary": "",
+                "education": [
+                    {
+                    "id": "da796a0c",
+                    "field": "Computing in Information Systems",
+                    "degree": "Bachelor",
+                    "institution": "National University of Singapore",
+                    "startDate": "2024-08-01",
+                    "endDate": "2028-05-01"
                     }
-                });
-
-                setDebugInfo({
-                    extractedInfo,
-                    resumeTextPreview: resumeText.substring(0, 500) + "...",
-                });
-
-                return updated;
-            });
-
-            toast.dismiss();
-            toast.success('Resume processed successfully! Empty fields have been filled with resume data.');
+                ],
+                "workExperience": [],
+                "projects": [
+                    {
+                    "id": "566e12a5",
+                    "name": "Helper Bot for Mental Health Support",
+                    "link": "https://github.com",
+                    "description": [
+                        "Hugging Face API Calling with Simple User Interface (UI)."
+                    ],
+                    "technologies": []
+                    },
+                    {
+                    "id": "bdceafca",
+                    "name": "Tech Stock Market Prediction",
+                    "link": "https://github.com",
+                    "description": [
+                        "Temporal Fusion Transformer, Quantile Regression DQN and Classification Models for NLP."
+                    ],
+                    "technologies": []
+                    },
+                    {
+                    "id": "c58e695b",
+                    "name": "Art E-Commerce Website with Payment & Chat Functions",
+                    "link": "https://sampleFakeUrl",
+                    "description": [
+                        "Supabase for relational database, with Stripe (payment) and GetStream (chat) API."
+                    ],
+                    "technologies": []
+                    },
+                    {
+                    "id": "38111ee4",
+                    "name": "Student Result Predictor",
+                    "link": "https://sampleFakeUrl",
+                    "description": [
+                        "Utilized PyTorch, Flask & Kaggle."
+                    ],
+                    "technologies": []
+                    }
+                ],
+                "skills": [
+                    {
+                    "id": "572c1d81",
+                    "name": "Python"
+                    },
+                    {
+                    "id": "085df40a",
+                    "name": "Java"
+                    },
+                    {
+                    "id": "12c5fcf5",
+                    "name": "JavaScript"
+                    },
+                    {
+                    "id": "c9907f48",
+                    "name": "R"
+                    },
+                    {
+                    "id": "a69b54a9",
+                    "name": "CSS"
+                    },
+                    {
+                    "id": "3db48878",
+                    "name": "VBA"
+                    },
+                    {
+                    "id": "e5b5876c",
+                    "name": "Pandas"
+                    },
+                    {
+                    "id": "57ce212f",
+                    "name": "Scikit"
+                    },
+                    {
+                    "id": "fcdaf41a",
+                    "name": "PyTorch"
+                    },
+                    {
+                    "id": "8d76c060",
+                    "name": "MatPlotLib"
+                    },
+                    {
+                    "id": "89e60220",
+                    "name": "NextJS"
+                    },
+                    {
+                    "id": "4fa67761",
+                    "name": "React"
+                    },
+                    {
+                    "id": "addc24d1",
+                    "name": "Tailwind"
+                    },
+                    {
+                    "id": "4418695c",
+                    "name": "English"
+                    },
+                    {
+                    "id": "7fc1330c",
+                    "name": "Chinese"
+                    }
+                ],
+                "extracurriculars": [
+                    {
+                    "id": "9d4194f6",
+                    "name": "NUS College, House Captain",
+                    "startDate": "2024-08-01",
+                    "endDate": "",
+                    "description": "Organized and coordinated house-events, bonding activities to enhance student engagement and foster sense of belonging among residents. Spear-headed recruitment process for the orientation program and Inter-House Games. Actively involved in logistical procedures not limited to budgeting, claim reimbursement matters."
+                    },
+                    {
+                    "id": "8b0a75d6",
+                    "name": "NUS Kayaking, Administration Executive",
+                    "startDate": "2024-08-01",
+                    "endDate": "",
+                    "description": "Liaised with participants to confirm registration, provide event details and ensure timely payments of participation fees. Maintained accurate records of participant details, certifications and payment status while ensuring compliance with PDPA regulations. Acted as key point of contact between club and participants and external stakeholders."
+                    }
+                ],
+                "additionalInfo": ""
+            })
         } catch (error) {
             console.error('Error processing resume:', error);
             toast.dismiss();
