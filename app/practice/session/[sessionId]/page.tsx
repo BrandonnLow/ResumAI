@@ -543,11 +543,7 @@ export default function PracticeSession() {
                                 </div>
 
                                 {!feedback && (
-<<<<<<< HEAD
-                                    <div className="flex justify-between">
-=======
                                     <div className="flex justify-end">
->>>>>>> origin/main
                                         <VoiceEmotionRecorder setUserAnswer={setUserAnswer} />
                                         <button
                                             type="button"
