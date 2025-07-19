@@ -615,7 +615,7 @@ export default function PracticeSession() {
                                                     value={customTagInput}
                                                     onChange={(e) => setCustomTagInput(e.target.value)}
                                                     className="border border-gray-600 rounded-l-md text-xs py-0.5 px-2 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500"
-                                                    onKeyPress={(e) => {
+                                                    onKeyDown={(e) => {
                                                         if (e.key === 'Enter' && customTagInput.trim()) {
                                                             handleAddCustomTag(customTagInput);
                                                             setCustomTagInput('');
