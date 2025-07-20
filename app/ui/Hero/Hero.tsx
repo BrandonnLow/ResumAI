@@ -29,17 +29,17 @@ export default function Hero() {
 
   if (loading) {
     return (
-      <div className="flex mx-auto bg-gray-700 md:pt-8 h-screen items-center justify-center w-full">
+      <div className="flex mx-auto bg-gray-700 h-screen items-center justify-center w-full">
         <LoadingPage text="Loading resuMate..." />
       </div>
     );
   }
 
   return (
-    <div className="flex mx-auto bg-gray-700 md:pt-8 h-screen items-center justify-center w-full">
+    <div className="flex mx-auto bg-gray-700 h-screen items-center justify-center w-full">
       <div className="relative flex md:justify-center justify-end gap-y-3 md:flex-row flex-col mx-4">
         <div className="m-8 md:mt-0 text-center max-w-[500px]">
-          <h1 className="text-4xl md:text-5xl pt-[30px] font-bold mb-4 text-white">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             Interview and Job AI Assistant
           </h1>
           <p className="text-gray-300 text-lg md:text-xl mt-2 mb-8 italic">

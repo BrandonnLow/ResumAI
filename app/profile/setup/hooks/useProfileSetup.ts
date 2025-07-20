@@ -79,151 +79,27 @@ export const useProfileSetup = () => {
         if (!e.target.files || e.target.files.length === 0) return;
 
         const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append("file", file); 
+        // console.log(file)
 
         try {
             setProcessingResume(true);
-            toast.loading('Processing your resume...');
+            toast.loading('Processing...');
+            const response = await fetch("http://localhost:5000/upload-resume", {
+                method: "POST",
+                body: formData
+            });
 
-            setProfile({
-                "name": "TAN PENG KIANG",
-                "email": "sample@u.nus.edu",
-                "phone": "8187 7303",
-                "location": "",
-                "summary": "",
-                "education": [
-                    {
-                    "id": "da796a0c",
-                    "field": "Computing in Information Systems",
-                    "degree": "Bachelor",
-                    "institution": "National University of Singapore",
-                    "startDate": "2024-08-01",
-                    "endDate": "2028-05-01"
-                    }
-                ],
-                "workExperience": [],
-                "projects": [
-                    {
-                    "id": "566e12a5",
-                    "name": "Helper Bot for Mental Health Support",
-                    "link": "https://github.com",
-                    "description": [
-                        "Hugging Face API Calling with Simple User Interface (UI)."
-                    ],
-                    "technologies": []
-                    },
-                    {
-                    "id": "bdceafca",
-                    "name": "Tech Stock Market Prediction",
-                    "link": "https://github.com",
-                    "description": [
-                        "Temporal Fusion Transformer, Quantile Regression DQN and Classification Models for NLP."
-                    ],
-                    "technologies": []
-                    },
-                    {
-                    "id": "c58e695b",
-                    "name": "Art E-Commerce Website with Payment & Chat Functions",
-                    "link": "https://sampleFakeUrl",
-                    "description": [
-                        "Supabase for relational database, with Stripe (payment) and GetStream (chat) API."
-                    ],
-                    "technologies": []
-                    },
-                    {
-                    "id": "38111ee4",
-                    "name": "Student Result Predictor",
-                    "link": "https://sampleFakeUrl",
-                    "description": [
-                        "Utilized PyTorch, Flask & Kaggle."
-                    ],
-                    "technologies": []
-                    }
-                ],
-                "skills": [
-                    {
-                    "id": "572c1d81",
-                    "name": "Python"
-                    },
-                    {
-                    "id": "085df40a",
-                    "name": "Java"
-                    },
-                    {
-                    "id": "12c5fcf5",
-                    "name": "JavaScript"
-                    },
-                    {
-                    "id": "c9907f48",
-                    "name": "R"
-                    },
-                    {
-                    "id": "a69b54a9",
-                    "name": "CSS"
-                    },
-                    {
-                    "id": "3db48878",
-                    "name": "VBA"
-                    },
-                    {
-                    "id": "e5b5876c",
-                    "name": "Pandas"
-                    },
-                    {
-                    "id": "57ce212f",
-                    "name": "Scikit"
-                    },
-                    {
-                    "id": "fcdaf41a",
-                    "name": "PyTorch"
-                    },
-                    {
-                    "id": "8d76c060",
-                    "name": "MatPlotLib"
-                    },
-                    {
-                    "id": "89e60220",
-                    "name": "NextJS"
-                    },
-                    {
-                    "id": "4fa67761",
-                    "name": "React"
-                    },
-                    {
-                    "id": "addc24d1",
-                    "name": "Tailwind"
-                    },
-                    {
-                    "id": "4418695c",
-                    "name": "English"
-                    },
-                    {
-                    "id": "7fc1330c",
-                    "name": "Chinese"
-                    }
-                ],
-                "extracurriculars": [
-                    {
-                    "id": "9d4194f6",
-                    "name": "NUS College, House Captain",
-                    "startDate": "2024-08-01",
-                    "endDate": "",
-                    "description": "Organized and coordinated house-events, bonding activities to enhance student engagement and foster sense of belonging among residents. Spear-headed recruitment process for the orientation program and Inter-House Games. Actively involved in logistical procedures not limited to budgeting, claim reimbursement matters."
-                    },
-                    {
-                    "id": "8b0a75d6",
-                    "name": "NUS Kayaking, Administration Executive",
-                    "startDate": "2024-08-01",
-                    "endDate": "",
-                    "description": "Liaised with participants to confirm registration, provide event details and ensure timely payments of participation fees. Maintained accurate records of participant details, certifications and payment status while ensuring compliance with PDPA regulations. Acted as key point of contact between club and participants and external stakeholders."
-                    }
-                ],
-                "additionalInfo": ""
-            })
+            const data = await response.json();
+
+            setProfile(data)
+            
         } catch (error) {
             console.error('Error processing resume:', error);
-            toast.dismiss();
             toast.error('Failed to process resume. Please try again or enter details manually.');
         } finally {
+            toast.dismiss();
             setProcessingResume(false);
         }
     };

@@ -10,7 +10,7 @@ import subprocess
 from flask_cors import CORS
 from load_model import load_finetuned_model, generate_response
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
-
+from PDF_parser_test import parse_student_resume
 app = Flask(__name__)
 CORS(app)
 torch.cuda.empty_cache()
@@ -18,6 +18,12 @@ torch.cuda.empty_cache()
 emotion_model = None
 emotion_labels = None
 emotion_device = None
+model = None
+tokenizer = None
+
+def load_text_model():
+    global model, tokenizer
+    model, tokenizer = load_finetuned_model("./model-finetuned-rtx4050")
 
 class AttentionPooling(nn.Module):
     def __init__(self, input_dim):
@@ -66,19 +72,20 @@ def load_emotion_model():
 @app.route('/deepSeekAnswer', methods=['POST'])
 def generate_text():
     data = request.json
-    prompt = f"""# Expert Interview Coach Feedback
-## Your Task
-Review the candidate's response to the question: "{data.get('question')}"
-Their answer was: "{data.get('prompt')}"
-Provide concise, actionable feedback with:
-1. 2-3 specific strengths in the response
-2. 1-2 areas for improvement with concrete suggestions
-3. A brief, improved sample response (under 5 sentences)
-DO NOT repeat the original question or answer verbatim.
-DO NOT explain your thought process or analysis method.
-Focus ONLY on constructive feedback and improvement suggestions."""
+    question = data.get("question")
+    answer = data.get("answer")
+    prompt = f"""Interview Question: {question}
+
+Candidate Answer: {answer}
+
+Provide detailed feedback on this interview answer. Analyze the response for:
+- Clarity
+- Insights
+- Effectiveness
+- How to improve
+
+Feedback:"""
     
-    model, tokenizer = load_finetuned_model("./model-finetuned-rtx4050")
     answer = generate_response(model, tokenizer, prompt)
     return jsonify({'answer': answer})
 
@@ -164,7 +171,21 @@ def predict_emotion():
         for temp_path in [webm_path, wav_path]:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
+
+@app.route("/upload-resume", methods=["POST"])
+def upload_resume():
+    file = request.files["file"]
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "Only PDF files are allowed"}), 400
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        file.save(tmp.name)
+        parsed_data = parse_student_resume(tmp.name)
+    os.remove(tmp.name)
+    return jsonify(parsed_data)
+
                 
 if __name__ == '__main__':
     load_emotion_model()
+    load_text_model()
     app.run(debug=True)

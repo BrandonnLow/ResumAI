@@ -243,14 +243,14 @@ export default function ProjectForm({
                                             <button
                                                 type="button"
                                                 onClick={() => handleEdit(index)}
-                                                className="inline-flex items-center px-2.5 py-1.5 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                className="max-h-[40px] inline-flex items-center px-2.5 py-1.5 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                             >
                                                 Edit
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => onRemove(index)}
-                                                className={getButtonClasses('danger')}
+                                                className={`max-h-[40px] ${getButtonClasses('danger')}`}
                                             >
                                                 Remove
                                             </button>

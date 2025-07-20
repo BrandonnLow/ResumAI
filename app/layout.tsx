@@ -4,6 +4,8 @@ import "./globals.css";
 import Nav from "./ui/NavBar/Nav";
 import { AuthProvider } from "./ui/Context/AuthContext";
 import ToastProvider from "./ui/providers/ToastProvider";
+import { usePathname } from 'next/navigation';
+import ConditionalMain from "./ui/components/conditionalLayout/conditionalLayout";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -57,9 +59,7 @@ export default function RootLayout({
                         </div>
 
                         {/* Main content area */}
-                        <main className="flex-1 pt-16">
-                            {children}
-                        </main>
+                        <ConditionalMain>{children}</ConditionalMain>
                     </div>
                 </AuthProvider>
             </body>
