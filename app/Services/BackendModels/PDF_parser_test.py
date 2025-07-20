@@ -11,16 +11,23 @@ from langchain.tools import tool
 from langchain.prompts import ChatPromptTemplate
 import uuid
 
-load_dotenv(".env.local")
+# def get_text_from_pdf_local(pdf_path):
+#     with open(pdf_path, 'rb') as file:
+#         reader = PyPDF2.PdfReader(file)
+#         text = ""
+#         for page in reader.pages:
+#             page_text = page.extract_text()
+#             if page_text:
+#                 text += page_text
+#     return text
 
-def get_text_from_pdf(pdf_path):
-    with open(pdf_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
-        text = ""
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text
+def get_text_from_pdf(file_obj):
+    reader = PyPDF2.PdfReader(file_obj)
+    text = ""
+    for page in reader.pages:
+        page_text = page.extract_text()
+        if page_text:
+            text += page_text
     return text
 
 @tool
@@ -219,6 +226,7 @@ def ensure_profile_shape(parsed_json):
     return profile
 
 def parse_student_resume(pdf_path):
+    load_dotenv("../../../.env.local")
     text = get_text_from_pdf(pdf_path)
     agent = create_student_resume_agent()
     result = agent.invoke({"input": f"Extract all the relevant fields from this resume in JSON format: {text}"})
@@ -228,5 +236,5 @@ def parse_student_resume(pdf_path):
     return final_profile
 
 if __name__ == "__main__":
-    result = parse_student_resume("PDF_parser_resume.pdf")
+    result = parse_student_resume("-")
     print(json.dumps(result, indent=2))

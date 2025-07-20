@@ -21,6 +21,8 @@ import { getCardClasses, getInputClasses, getButtonClasses } from '../../../ui/s
 import Loading, { LoadingPage } from '../../../ui/components/Loading';
 import VoiceEmotionRecorder from '@/app/ui/components/recordButton/recordButton';
 
+
+
 export default function PracticeSession() {
     const params = useParams();
     const sessionId = params.sessionId as string;
@@ -41,6 +43,23 @@ export default function PracticeSession() {
     const [generatingQuestions, setGeneratingQuestions] = useState<boolean>(false);
     const [gettingFeedback, setGettingFeedback] = useState<boolean>(false);
     const [customTagInput, setCustomTagInput] = useState('');
+
+    const produceFeedback = async () => {
+        const response = await fetch('http://127.0.0.1:5000/deepSeekAnswer', {
+            method:'POST',
+            headers: {
+                'Content-type':'application/json'
+            },
+            body:JSON.stringify({
+                answer:userAnswer, 
+                question:currentQuestion,
+            })
+        })
+    
+        const data = await response.json();
+        setFeedback(data.answer)
+        return String(data.answer)
+    }
 
     useEffect(() => {
         const loadSessionData = async () => {
@@ -219,12 +238,15 @@ export default function PracticeSession() {
             setGettingFeedback(true);
             toast.loading('Getting AI feedback on your answer...');
 
-            const feedbackText = await getAnswerFeedback(
-                currentQuestion.text,
-                userAnswer,
-                userProfile,
-                job || undefined
-            );
+            // CHATGPT PLACEHOLDER
+            // const feedbackText = await getAnswerFeedback(
+            //     currentQuestion.text,
+            //     userAnswer,
+            //     userProfile,
+            //     job || undefined
+            // );
+
+            const feedbackText = await produceFeedback();
 
             setFeedback(feedbackText || 'No feedback available.');
 
@@ -543,7 +565,7 @@ export default function PracticeSession() {
                                 </div>
 
                                 {!feedback && (
-                                    <div className="flex justify-end">
+                                    <div className="flex justify-between">
                                         <VoiceEmotionRecorder setUserAnswer={setUserAnswer} />
                                         <button
                                             type="button"
