@@ -157,7 +157,7 @@ export default function JobDetail() {
             <ProfileCheck>
                 <div className="min-h-screen bg-gray-700">
                     {/* Header */}
-                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                         <div className="max-w-7xl mx-auto">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-center mb-4 sm:mb-0">
