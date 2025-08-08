@@ -10,39 +10,39 @@ import { getCardClasses, getButtonClasses } from '../../ui/styles/theme';
 export default function GoalProgressBar() {
     const { currentUser } = useAuth();
     const router = useRouter();
-    const [currentGoal, setCurrentGoal] = useState<WeeklyGoal | null>(null);
+    const [goal, setGoal] = useState<WeeklyGoal | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchGoalData = async () => {
-            if (!currentUser) return;
+        if (!currentUser) return;
 
+        const loadGoal = async () => {
             try {
                 setLoading(true);
-
-                // Update progress first
                 await updateWeeklyGoalProgress(currentUser.uid);
-
-                // Then fetch current goal
-                const goal = await getCurrentWeekGoal(currentUser.uid);
-                setCurrentGoal(goal);
-            } catch (error) {
-                console.error('Error fetching goal data:', error);
-            } finally {
-                setLoading(false);
+                const weekGoal = await getCurrentWeekGoal(currentUser.uid);
+                setGoal(weekGoal);
+            } catch (err) {
+                console.error('Goal fetch failed:', err);
             }
+            setLoading(false);
         };
 
-        fetchGoalData();
+        loadGoal();
     }, [currentUser]);
 
-    if (loading || !currentGoal) {
-        return null; // Don't show anything if no goal is set
-    }
+    if (loading || !goal) return null;
 
-    const { currentProgress, targetQuestions, isCompleted } = currentGoal;
-    const progressPercentage = Math.min((currentProgress / targetQuestions) * 100, 100);
-    const remainingQuestions = Math.max(0, targetQuestions - currentProgress);
+    const progress = Math.min((goal.currentProgress / goal.targetQuestions) * 100, 100);
+    const remaining = Math.max(0, goal.targetQuestions - goal.currentProgress);
+    const done = goal.isCompleted;
+
+    const progressBarBg = done
+        ? 'bg-gradient-to-r from-green-500 to-green-600'
+        : 'bg-gradient-to-r from-blue-500 to-purple-600';
+
+    const statusColor = done ? 'text-green-400' : 'text-blue-400';
+    const dotColor = done ? 'bg-green-400' : 'bg-blue-400';
 
     return (
         <div className={`${getCardClasses()} mt-8`}>
@@ -51,7 +51,7 @@ export default function GoalProgressBar() {
                     <div>
                         <h2 className="text-lg font-medium text-white">Weekly Goal Progress</h2>
                         <p className="text-sm text-gray-400">
-                            {currentGoal.currentProgress} of {currentGoal.targetQuestions} questions completed this week
+                            {goal.currentProgress} of {goal.targetQuestions} questions completed this week
                         </p>
                     </div>
                     <div className="mt-3 sm:mt-0">
@@ -64,35 +64,28 @@ export default function GoalProgressBar() {
                     </div>
                 </div>
 
-                {/* Progress Bar */}
                 <div className="mb-4">
                     <div className="flex justify-between text-sm text-gray-300 mb-2">
                         <span>Progress</span>
-                        <span>{Math.round(progressPercentage)}%</span>
+                        <span>{Math.round(progress)}%</span>
                     </div>
                     <div className="w-full bg-gray-600 rounded-full h-3 overflow-hidden">
                         <div
-                            className={`h-full rounded-full transition-all duration-500 ease-out ${isCompleted
-                                ? 'bg-gradient-to-r from-green-500 to-green-600'
-                                : 'bg-gradient-to-r from-blue-500 to-purple-600'
-                                }`}
-                            style={{ width: `${progressPercentage}%` }}
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${progressBarBg}`}
+                            style={{ width: `${progress}%` }}
                         />
                     </div>
                 </div>
 
-                {/* Status */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                        <div className={`w-2 h-2 rounded-full mr-2 ${isCompleted ? 'bg-green-400' : 'bg-blue-400'
-                            }`} />
-                        <span className={`text-sm font-medium ${isCompleted ? 'text-green-400' : 'text-blue-400'
-                            }`}>
-                            {isCompleted ? 'Goal Completed! 🎉' : `${remainingQuestions} questions remaining`}
+                        <div className={`w-2 h-2 rounded-full mr-2 ${dotColor}`} />
+                        <span className={`text-sm font-medium ${statusColor}`}>
+                            {done ? 'Goal Completed! 🎉' : `${remaining} questions remaining`}
                         </span>
                     </div>
 
-                    {!isCompleted && (
+                    {!done && (
                         <button
                             onClick={() => router.push('/practice/setup')}
                             className="text-sm text-blue-400 hover:text-blue-300 transition-colors"

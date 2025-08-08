@@ -28,11 +28,10 @@ export default function DashboardBanners({
 }: DashboardBannersProps) {
     const router = useRouter();
 
-    // Debug component - only show if there's actually an issue
-    const DebugBanner = () => {
-        const hasDataIssue = !profile && !profileError && allAnswers.length === 0 && jobs.length === 0;
+    const renderDebugBanner = () => {
+        const noData = !profile && !profileError && allAnswers.length === 0 && jobs.length === 0;
 
-        if (!hasDataIssue) return null;
+        if (!noData) return null;
 
         return (
             <div className="mb-6 bg-red-900/20 border border-red-600/30 rounded-lg p-4">
@@ -50,9 +49,7 @@ export default function DashboardBanners({
                         </div>
                         <div className="mt-3">
                             <button
-                                onClick={() => {
-                                    onFetchDashboardData();
-                                }}
+                                onClick={onFetchDashboardData}
                                 className="inline-flex items-center px-3 py-2 border border-red-600 text-sm font-medium rounded-md text-red-200 hover:bg-red-900/20"
                             >
                                 Retry Loading Data
@@ -64,9 +61,11 @@ export default function DashboardBanners({
         );
     };
 
-    // Welcome banner for first-time users
-    const WelcomeBanner = () => {
+    const renderWelcome = () => {
         if (!showWelcome) return null;
+
+        const handleStartPractice = () => router.push('/practice/setup');
+        const dismissWelcome = () => onSetShowWelcome(false);
 
         return (
             <div className="mb-6 bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-600/30 rounded-lg p-6">
@@ -88,13 +87,13 @@ export default function DashboardBanners({
                         </p>
                         <div className="mt-4 flex space-x-3">
                             <button
-                                onClick={() => router.push('/practice/setup')}
+                                onClick={handleStartPractice}
                                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                             >
                                 Start First Practice
                             </button>
                             <button
-                                onClick={() => onSetShowWelcome(false)}
+                                onClick={dismissWelcome}
                                 className="inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-md text-blue-200 hover:bg-blue-900/20"
                             >
                                 Got it
@@ -102,10 +101,7 @@ export default function DashboardBanners({
                         </div>
                     </div>
                     <div className="ml-4 flex-shrink-0">
-                        <button
-                            onClick={() => onSetShowWelcome(false)}
-                            className="inline-flex text-blue-400 hover:text-blue-300"
-                        >
+                        <button onClick={dismissWelcome} className="inline-flex text-blue-400 hover:text-blue-300">
                             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -116,42 +112,42 @@ export default function DashboardBanners({
         );
     };
 
-    // Profile error banner
-    const ProfileErrorBanner = () => {
-        if (!profileError) return null;
-
+    if (profileError) {
         return (
-            <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
-                <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div className="ml-3 flex-1">
-                        <h3 className="text-sm font-medium text-yellow-200">Profile Issue Detected</h3>
-                        <div className="mt-2 text-sm text-yellow-300">
-                            <p>{profileError}. This may affect your experience.</p>
+            <>
+                {renderDebugBanner()}
+                {renderWelcome()}
+                <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
-                        <div className="mt-3">
-                            <button
-                                onClick={() => router.push('/profile/setup')}
-                                className="inline-flex items-center px-3 py-2 border border-yellow-600 text-sm font-medium rounded-md text-yellow-200 hover:bg-yellow-900/20"
-                            >
-                                Complete Profile Setup
-                            </button>
+                        <div className="ml-3 flex-1">
+                            <h3 className="text-sm font-medium text-yellow-200">Profile Issue Detected</h3>
+                            <div className="mt-2 text-sm text-yellow-300">
+                                <p>{profileError}. This may affect your experience.</p>
+                            </div>
+                            <div className="mt-3">
+                                <button
+                                    onClick={() => router.push('/profile/setup')}
+                                    className="inline-flex items-center px-3 py-2 border border-yellow-600 text-sm font-medium rounded-md text-yellow-200 hover:bg-yellow-900/20"
+                                >
+                                    Complete Profile Setup
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </>
         );
-    };
+    }
 
     return (
         <>
-            <DebugBanner />
-            <WelcomeBanner />
-            <ProfileErrorBanner />
+            {renderDebugBanner()}
+            {renderWelcome()}
         </>
     );
 }

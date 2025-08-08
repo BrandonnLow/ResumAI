@@ -13,42 +13,41 @@ interface ProgressStatsProps {
 export default function ProgressStats({ allAnswers, jobs }: ProgressStatsProps) {
     const router = useRouter();
 
+    const interviewingJobs = jobs.filter(job => job.status === 'Interviewing').length;
+    const jobOffers = jobs.filter(job => job.status === 'Offer').length;
+
+    const StatCard = ({ label, value, color }: { label: string; value: number; color: string }) => (
+        <div className={`bg-${color}-900/20 border border-${color}-600/30 overflow-hidden shadow rounded-lg hover:border-${color}-600/50 transition-all duration-200`}>
+            <div className="px-4 py-5 sm:p-6">
+                <dt className={`text-sm font-medium text-${color}-200 truncate`}>{label}</dt>
+                <dd className="mt-1 text-3xl font-semibold text-white">{value}</dd>
+            </div>
+        </div>
+    );
+
     return (
         <div className={`mt-8 ${getCardClasses()}`}>
             <div className="px-4 py-5 sm:p-6">
                 <h2 className="text-lg font-medium text-white mb-4">Your Progress</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-900/20 border border-blue-600/30 overflow-hidden shadow rounded-lg hover:border-blue-600/50 transition-all duration-200">
-                        <div className="px-4 py-5 sm:p-6">
-                            <dt className="text-sm font-medium text-blue-200 truncate">Total Answers</dt>
-                            <dd className="mt-1 text-3xl font-semibold text-white">{allAnswers.length}</dd>
-                        </div>
-                    </div>
-                    <div className="bg-purple-900/20 border border-purple-600/30 overflow-hidden shadow rounded-lg hover:border-purple-600/50 transition-all duration-200">
-                        <div className="px-4 py-5 sm:p-6">
-                            <dt className="text-sm font-medium text-purple-200 truncate">Jobs Tracked</dt>
-                            <dd className="mt-1 text-3xl font-semibold text-white">{jobs.length}</dd>
-                        </div>
-                    </div>
+                    <StatCard label="Total Answers" value={allAnswers.length} color="blue" />
+                    <StatCard label="Jobs Tracked" value={jobs.length} color="purple" />
+
                     <div className="bg-indigo-900/20 border border-indigo-600/30 overflow-hidden shadow rounded-lg hover:border-indigo-600/50 transition-all duration-200">
                         <div className="px-4 py-5 sm:p-6">
                             <dt className="text-sm font-medium text-indigo-200 truncate">Job Interviews</dt>
-                            <dd className="mt-1 text-3xl font-semibold text-white">
-                                {jobs.filter(job => job.status === 'Interviewing').length}
-                            </dd>
+                            <dd className="mt-1 text-3xl font-semibold text-white">{interviewingJobs}</dd>
                         </div>
                     </div>
+
                     <div className="bg-green-900/20 border border-green-600/30 overflow-hidden shadow rounded-lg hover:border-green-600/50 transition-all duration-200">
                         <div className="px-4 py-5 sm:p-6">
                             <dt className="text-sm font-medium text-green-200 truncate">Job Offers</dt>
-                            <dd className="mt-1 text-3xl font-semibold text-white">
-                                {jobs.filter(job => job.status === 'Offer').length}
-                            </dd>
+                            <dd className="mt-1 text-3xl font-semibold text-white">{jobOffers}</dd>
                         </div>
                     </div>
                 </div>
 
-                {/* Quick Action Buttons */}
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <button
                         onClick={() => router.push('/practice/setup')}
