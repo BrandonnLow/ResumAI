@@ -11,68 +11,64 @@ interface GoalHistoryProps {
 }
 
 export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
-    const formatDateRange = (weekStart: string, weekEnd: string) => {
-        const start = new Date(weekStart);
-        const end = new Date(weekEnd);
+    const formatWeek = (start: string, end: string) => {
+        const s = new Date(start);
+        const e = new Date(end);
 
-        const formatDate = (date: Date) => {
-            return date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric'
-            });
-        };
+        const fmt = (date: Date) => date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        });
 
-        return `${formatDate(start)} - ${formatDate(end)}`;
+        return `${fmt(s)} - ${fmt(e)}`;
     };
 
-    const getCompletionPercentage = (current: number, target: number) => {
+    const getProgress = (current: number, target: number) => {
         return Math.min((current / target) * 100, 100);
     };
 
-    const getStatusIcon = (goal: WeeklyGoal) => {
+    const getIcon = (goal: WeeklyGoal) => {
+        const className = "w-6 h-6 rounded-full flex items-center justify-center";
+
         if (goal.isCompleted) {
             return (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <div className={`${className} bg-green-500`}>
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
             );
-        } else if (goal.currentProgress > 0) {
+        }
+
+        if (goal.currentProgress > 0) {
             return (
-                <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                <div className={`${className} bg-yellow-500`}>
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
             );
-        } else {
-            return (
-                <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                    </svg>
-                </div>
-            );
         }
+
+        return (
+            <div className={`${className} bg-gray-500`}>
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+            </div>
+        );
     };
 
-    const getStatusText = (goal: WeeklyGoal) => {
-        if (goal.isCompleted) return 'Completed';
-        if (goal.currentProgress > 0) return 'Partial';
-        return 'Not started';
+    const getStatus = (goal: WeeklyGoal) => {
+        if (goal.isCompleted) return { text: 'Done', color: 'text-green-400' };
+        if (goal.currentProgress > 0) return { text: 'Partial', color: 'text-yellow-400' };
+        return { text: 'Skipped', color: 'text-gray-400' };
     };
 
-    const getStatusColor = (goal: WeeklyGoal) => {
-        if (goal.isCompleted) return 'text-green-400';
-        if (goal.currentProgress > 0) return 'text-yellow-400';
-        return 'text-gray-400';
-    };
-
-    const isCurrentWeekGoal = (goal: WeeklyGoal) => {
-        const currentWeekStart = getWeekStart();
-        const goalWeekStart = new Date(goal.weekStartDate);
-        return goalWeekStart.toDateString() === currentWeekStart.toDateString();
+    const isCurrent = (goal: WeeklyGoal) => {
+        const currentWeek = getWeekStart();
+        const goalWeek = new Date(goal.weekStartDate);
+        return goalWeek.toDateString() === currentWeek.toDateString();
     };
 
     return (
@@ -80,9 +76,9 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
             <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-medium text-white">Goal History</h3>
+                        <h3 className="text-lg font-medium text-white">History</h3>
                         <p className="mt-1 text-sm text-gray-400">
-                            Your past weekly goals and progress
+                            Past goals and progress
                         </p>
                     </div>
                     <button
@@ -102,37 +98,38 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                         </div>
-                        <p className="text-gray-400">No goal history yet</p>
-                        <p className="text-sm text-gray-500 mt-1">Set your first weekly goal to start tracking</p>
+                        <p className="text-gray-400">No history yet</p>
+                        <p className="text-sm text-gray-500 mt-1">Set your first goal to start tracking</p>
                     </div>
                 ) : (
                     <div className="space-y-4 max-h-96 overflow-y-auto">
-                        {history.map((goal, index) => {
-                            const completionPercentage = getCompletionPercentage(goal.currentProgress, goal.targetQuestions);
-                            const isCurrentWeek = isCurrentWeekGoal(goal);
+                        {history.map((goal) => {
+                            const progress = getProgress(goal.currentProgress, goal.targetQuestions);
+                            const current = isCurrent(goal);
+                            const status = getStatus(goal);
 
                             return (
                                 <div
                                     key={goal.id}
-                                    className={`border rounded-lg p-4 transition-all duration-200 hover:border-gray-500 ${isCurrentWeek
+                                    className={`border rounded-lg p-4 transition-all hover:border-gray-500 ${current
                                         ? 'border-blue-600/50 bg-blue-900/10'
                                         : 'border-gray-600 bg-gray-700/30'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center space-x-3">
-                                            {getStatusIcon(goal)}
+                                            {getIcon(goal)}
                                             <div>
                                                 <p className="text-sm font-medium text-white">
-                                                    {formatDateRange(goal.weekStartDate, goal.weekEndDate)}
-                                                    {isCurrentWeek && (
+                                                    {formatWeek(goal.weekStartDate, goal.weekEndDate)}
+                                                    {current && (
                                                         <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900/20 text-blue-300 border border-blue-600/30">
                                                             Current
                                                         </span>
                                                     )}
                                                 </p>
-                                                <p className={`text-xs ${getStatusColor(goal)}`}>
-                                                    {getStatusText(goal)}
+                                                <p className={`text-xs ${status.color}`}>
+                                                    {status.text}
                                                 </p>
                                             </div>
                                         </div>
@@ -141,31 +138,29 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
                                                 {goal.currentProgress}/{goal.targetQuestions}
                                             </p>
                                             <p className="text-xs text-gray-400">
-                                                {Math.round(completionPercentage)}%
+                                                {Math.round(progress)}%
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Progress Bar */}
                                     <div className="w-full bg-gray-600 rounded-full h-2">
                                         <div
                                             className={`h-full rounded-full transition-all duration-300 ${goal.isCompleted
                                                 ? 'bg-gradient-to-r from-green-500 to-green-600'
-                                                : completionPercentage > 0
+                                                : progress > 0
                                                     ? 'bg-gradient-to-r from-yellow-500 to-yellow-600'
                                                     : 'bg-gray-500'
                                                 }`}
-                                            style={{ width: `${completionPercentage}%` }}
+                                            style={{ width: `${progress}%` }}
                                         />
                                     </div>
 
-                                    {/* Completion Badge */}
                                     {goal.isCompleted && goal.completedDate && (
                                         <div className="mt-2 flex items-center text-xs text-green-400">
                                             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Completed {new Date(goal.completedDate).toLocaleDateString()}
+                                            Done {new Date(goal.completedDate).toLocaleDateString()}
                                         </div>
                                     )}
                                 </div>
@@ -174,7 +169,6 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
                     </div>
                 )}
 
-                {/* Summary Stats */}
                 {history.length > 0 && (
                     <div className="mt-6 pt-4 border-t border-gray-600">
                         <div className="grid grid-cols-3 gap-4 text-center">
@@ -188,7 +182,7 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
                                 <p className="text-lg font-semibold text-white">
                                     {history.reduce((sum, g) => sum + g.currentProgress, 0)}
                                 </p>
-                                <p className="text-xs text-gray-400">Total Questions</p>
+                                <p className="text-xs text-gray-400">Total</p>
                             </div>
                             <div>
                                 <p className="text-lg font-semibold text-white">
@@ -196,7 +190,7 @@ export default function GoalHistory({ history, onRefresh }: GoalHistoryProps) {
                                         (history.filter(g => g.isCompleted).length / history.length) * 100
                                     ) : 0}%
                                 </p>
-                                <p className="text-xs text-gray-400">Success Rate</p>
+                                <p className="text-xs text-gray-400">Success</p>
                             </div>
                         </div>
                     </div>

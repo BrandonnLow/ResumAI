@@ -11,31 +11,25 @@ interface GoalSettingsProps {
 }
 
 export default function GoalSettings({ currentTarget, onSave, onCancel, loading }: GoalSettingsProps) {
-    const [targetQuestions, setTargetQuestions] = useState(currentTarget || 5);
+    const [target, setTarget] = useState(currentTarget || 5);
 
-    const presetGoals = [3, 5, 10, 15, 20, 25];
+    const presets = [3, 5, 10, 15, 20, 25];
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (targetQuestions < 1) return;
-        await onSave(targetQuestions);
+        if (target < 1) return;
+        await onSave(target);
     };
 
-    const getRecommendation = (target: number) => {
-        if (target <= 3) return "Light practice - perfect for getting started";
-        if (target <= 7) return "Steady progress - great for building consistency";
-        if (target <= 15) return "Focused improvement - excellent for skill building";
-        if (target <= 25) return "Intensive practice - ideal for upcoming interviews";
-        return "Expert level - maximum interview preparation";
+    const getNote = (val: number) => {
+        if (val <= 3) return { text: "Easy start", color: "text-green-400" };
+        if (val <= 7) return { text: "Steady pace", color: "text-blue-400" };
+        if (val <= 15) return { text: "Good momentum", color: "text-yellow-400" };
+        if (val <= 25) return { text: "Intensive prep", color: "text-orange-400" };
+        return { text: "Expert mode", color: "text-red-400" };
     };
 
-    const getDifficultyColor = (target: number) => {
-        if (target <= 3) return "text-green-400";
-        if (target <= 7) return "text-blue-400";
-        if (target <= 15) return "text-yellow-400";
-        if (target <= 25) return "text-orange-400";
-        return "text-red-400";
-    };
+    const note = getNote(target);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -43,7 +37,7 @@ export default function GoalSettings({ currentTarget, onSave, onCancel, loading 
                 <div className="px-6 py-4 border-b border-gray-600">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold text-white">
-                            {currentTarget > 0 ? 'Update Weekly Goal' : 'Set Weekly Goal'}
+                            {currentTarget > 0 ? 'Update Goal' : 'Set Goal'}
                         </h2>
                         <button
                             onClick={onCancel}
@@ -56,36 +50,35 @@ export default function GoalSettings({ currentTarget, onSave, onCancel, loading 
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6">
+                <form onSubmit={onSubmit} className="p-6">
                     <div className="mb-6">
                         <label htmlFor="target" className="block text-sm font-medium text-gray-300 mb-2">
-                            Weekly Target (Questions)
+                            Questions per week
                         </label>
                         <input
                             type="number"
                             id="target"
                             min="1"
                             max="100"
-                            value={targetQuestions}
-                            onChange={(e) => setTargetQuestions(Math.max(1, parseInt(e.target.value) || 1))}
+                            value={target}
+                            onChange={(e) => setTarget(Math.max(1, parseInt(e.target.value) || 1))}
                             className={`${getInputClasses()} block w-full sm:text-sm rounded-md text-center text-lg font-semibold`}
                             disabled={loading}
                         />
-                        <p className={`mt-2 text-sm ${getDifficultyColor(targetQuestions)}`}>
-                            {getRecommendation(targetQuestions)}
+                        <p className={`mt-2 text-sm ${note.color}`}>
+                            {note.text}
                         </p>
                     </div>
 
-                    {/* Preset Goals */}
                     <div className="mb-6">
-                        <p className="text-sm font-medium text-gray-300 mb-3">Quick Select:</p>
+                        <p className="text-sm font-medium text-gray-300 mb-3">Quick pick:</p>
                         <div className="grid grid-cols-3 gap-2">
-                            {presetGoals.map((preset) => (
+                            {presets.map((preset) => (
                                 <button
                                     key={preset}
                                     type="button"
-                                    onClick={() => setTargetQuestions(preset)}
-                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${targetQuestions === preset
+                                    onClick={() => setTarget(preset)}
+                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${target === preset
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                         }`}
@@ -97,43 +90,15 @@ export default function GoalSettings({ currentTarget, onSave, onCancel, loading 
                         </div>
                     </div>
 
-                    {/* Goal Benefits */}
-                    <div className="mb-6 bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-blue-200 mb-2">Benefits of Setting Goals:</h3>
-                        <ul className="text-sm text-blue-300 space-y-1">
-                            <li className="flex items-center">
-                                <svg className="w-4 h-4 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Track your progress consistently
-                            </li>
-                            <li className="flex items-center">
-                                <svg className="w-4 h-4 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Build momentum and stay motivated
-                            </li>
-                            <li className="flex items-center">
-                                <svg className="w-4 h-4 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Develop consistent practice habits
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Time Estimate */}
                     <div className="mb-6 bg-gray-700/50 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-gray-300 mb-2">Time Estimate:</h3>
                         <p className="text-sm text-gray-400">
-                            {targetQuestions} questions ≈ {Math.round(targetQuestions * 5)} minutes/week
+                            About {Math.round(target * 5)} minutes per week
                             <span className="text-gray-500 ml-1">
-                                (~{Math.round(targetQuestions * 5 / 7)} min/day)
+                                ({Math.round(target * 5 / 7)} min/day)
                             </span>
                         </p>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex space-x-3">
                         <button
                             type="button"
@@ -146,7 +111,7 @@ export default function GoalSettings({ currentTarget, onSave, onCancel, loading 
                         <button
                             type="submit"
                             className={`${getButtonClasses('primary')} flex-1`}
-                            disabled={loading || targetQuestions < 1}
+                            disabled={loading || target < 1}
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center">

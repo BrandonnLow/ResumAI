@@ -14,103 +14,74 @@ export function useDashboardData(currentUser: any, profileComplete: boolean) {
     const [loading, setLoading] = useState(true);
     const [showWelcome, setShowWelcome] = useState(false);
 
-    // Track if we're currently fetching to prevent duplicate requests
-    const fetchingRef = useRef(false);
-    const mountedRef = useRef(true);
+    const isFetching = useRef(false);
+    const mounted = useRef(true);
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => {
-            mountedRef.current = false;
+            mounted.current = false;
         };
     }, []);
 
-    // Memoized function to prevent recreation on every render
     const fetchDashboardData = useCallback(async () => {
-        // Prevent multiple simultaneous fetches
-        if (!currentUser || fetchingRef.current) {
-            console.log('Skipping fetch - no user or already fetching');
-            return;
-        }
+        if (!currentUser || isFetching.current) return;
 
         try {
-            fetchingRef.current = true;
+            isFetching.current = true;
             setLoading(true);
             setProfileError(null);
 
-            console.log('Starting dashboard data fetch for user:', currentUser.uid);
-
-            // Fetch all data in parallel
             const [userProfile, userAnswers, userJobs] = await Promise.all([
                 getUserProfile(currentUser.uid),
                 getAnswers(currentUser.uid),
                 getJobs(currentUser.uid)
             ]);
 
-            console.log('Data fetched successfully:', {
-                profile: !!userProfile,
-                profileName: userProfile?.name || 'N/A',
-                answersCount: userAnswers.length,
-                jobsCount: userJobs.length
-            });
-
-            // Handle profile
             if (!userProfile) {
-                console.error('No profile found for user:', currentUser.uid);
                 setProfileError('Profile not found');
             } else {
                 setProfile(userProfile);
-                if (!userProfile.name || userProfile.name.trim() === '') {
+                if (!userProfile.name?.trim()) {
                     setProfileError('Profile name is missing');
                 }
             }
 
-            // Set answers
             setAllAnswers(userAnswers);
             setRecentAnswers(userAnswers.slice(0, 5));
-
-            // Set jobs
             setJobs(userJobs);
 
-            // Check for welcome message
-            const hasShownWelcome = localStorage.getItem(`welcome_shown_${currentUser.uid}`);
-            if (profileComplete && !hasShownWelcome && userProfile) {
+            const welcomeKey = `welcome_shown_${currentUser.uid}`;
+            if (profileComplete && !localStorage.getItem(welcomeKey) && userProfile) {
                 setShowWelcome(true);
-                localStorage.setItem(`welcome_shown_${currentUser.uid}`, 'true');
+                localStorage.setItem(welcomeKey, 'true');
             }
 
-            console.log('Dashboard data updated successfully');
-
         } catch (error) {
-            console.error('Error fetching dashboard data:', error);
+            console.error('Dashboard fetch failed:', error);
             setProfileError('Failed to load profile data');
             toast.error('Failed to load dashboard data. Please try again.');
         } finally {
-            // Always set loading to false
             setLoading(false);
-            fetchingRef.current = false;
-            console.log('Dashboard fetch completed, loading set to false');
+            isFetching.current = false;
         }
     }, [currentUser, profileComplete]);
 
-    // Main data fetching effect
     useEffect(() => {
-        if (currentUser && mountedRef.current) {
-            console.log('useEffect triggered for dashboard data fetch');
+        if (currentUser && mounted.current) {
             fetchDashboardData();
         }
     }, [currentUser, fetchDashboardData]);
 
-    // Ensure loading doesn't stay true forever
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            if (loading && !fetchingRef.current) {
-                console.log('Fallback: Setting loading to false after timeout');
+        if (!loading) return;
+
+        const fallbackTimeout = setTimeout(() => {
+            if (loading && !isFetching.current) {
                 setLoading(false);
             }
-        }, 10000); // 10 second timeout
+        }, 10000);
 
-        return () => clearTimeout(timeout);
+        return () => clearTimeout(fallbackTimeout);
     }, [loading]);
 
     return {
