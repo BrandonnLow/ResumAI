@@ -11,6 +11,29 @@ import ProfileCheck from '../../ui/components/ProfileCheck';
 import { getCardClasses, getInputClasses, getButtonClasses } from '../../ui/styles/theme';
 import { LoadingPage } from '../../ui/components/Loading';
 
+const questionCategories = [
+    {
+        id: 'Motivational',
+        label: 'Motivational Questions',
+        desc: 'Why this company? Why this role? Career goals and aspirations'
+    },
+    {
+        id: 'Behavioral',
+        label: 'Behavioral Questions',
+        desc: 'Past experiences, teamwork, conflict resolution, leadership'
+    },
+    {
+        id: 'Technical',
+        label: 'Technical Questions',
+        desc: 'Role-specific skills, problem-solving, domain knowledge'
+    },
+    {
+        id: 'Personality',
+        label: 'Personality Questions',
+        desc: 'Work style, strengths, weaknesses, cultural fit'
+    }
+];
+
 export default function PracticeSetup() {
     const { currentUser } = useAuth();
     const router = useRouter();
@@ -24,7 +47,6 @@ export default function PracticeSetup() {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(false);
 
-    // Check for job parameter in URL
     useEffect(() => {
         const jobParam = searchParams.get('job');
         if (jobParam) {
@@ -33,92 +55,77 @@ export default function PracticeSetup() {
         }
     }, [searchParams]);
 
-    // Fetch user profile and jobs on component mount
     useEffect(() => {
-        const fetchData = async () => {
-            if (!currentUser) return;
+        if (!currentUser) return;
+
+        const loadUserData = async () => {
+            setLoading(true);
 
             try {
-                setLoading(true);
+                const [profile, userJobs] = await Promise.all([
+                    getUserProfile(currentUser.uid),
+                    getJobs(currentUser.uid)
+                ]);
 
-                // Fetch user profile
-                const profile = await getUserProfile(currentUser.uid);
                 setUserProfile(profile);
-
-                // Fetch user's saved jobs
-                const userJobs = await getJobs(currentUser.uid);
                 setJobs(userJobs);
 
-                // If a job ID was passed in the URL, select it and populate description
                 const jobParam = searchParams.get('job');
                 if (jobParam) {
-                    const job = userJobs.find(j => j.id === jobParam);
-                    if (job && job.description) {
-                        setJobDescription(job.description);
+                    const matchedJob = userJobs.find(j => j.id === jobParam);
+                    if (matchedJob?.description) {
+                        setJobDescription(matchedJob.description);
                     }
                 }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                toast.error('Failed to load your data. Please try again.');
+            } catch (err) {
+                console.error('Failed to load user data:', err);
+                toast.error('Something went wrong loading your data');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchData();
+        loadUserData();
     }, [currentUser, searchParams]);
 
-    // Handle category selection
-    const handleCategoryToggle = (category: QuestionCategory) => {
-        setCategories(prev => {
-            if (prev.includes(category)) {
-                return prev.filter(c => c !== category);
-            } else {
-                return [...prev, category];
-            }
-        });
+    const toggleCategory = (category: QuestionCategory) => {
+        setCategories(prev =>
+            prev.includes(category)
+                ? prev.filter(c => c !== category)
+                : [...prev, category]
+        );
     };
 
-    // Handle job selection
-    const handleJobChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectJob = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const jobId = e.target.value;
         setSelectedJob(jobId);
 
-        if (jobId) {
-            const job = jobs.find(j => j.id === jobId);
-            if (job && job.description) {
-                setJobDescription(job.description);
-            } else {
-                setJobDescription('');
-            }
-        } else {
-            setJobDescription('');
-        }
+        const job = jobs.find(j => j.id === jobId);
+        setJobDescription(job?.description || '');
     };
 
-    // Start practice session
-    const handleStartSession = async () => {
-        if (categories.length === 0) {
-            return toast.error('Please select at least one question category');
+    const startSession = async () => {
+        if (!categories.length) {
+            toast.error('Pick at least one question type');
+            return;
         }
 
-        try {
-            setLoading(true);
-            toast.loading('Creating your practice session...');
+        setLoading(true);
+        const loadingToast = toast.loading('Setting up your practice session...');
 
-            // Create practice session in Firestore
+        try {
             const sessionId = await createPracticeSession(
                 currentUser!.uid,
                 categories,
                 sessionType === 'job-specific' ? selectedJob : undefined
             );
 
-            // Navigate to practice session
+            toast.dismiss(loadingToast);
             router.push(`/practice/session/${sessionId}`);
-        } catch (error) {
-            console.error('Error creating practice session:', error);
-            toast.dismiss();
-            toast.error('Failed to start practice session. Please try again.');
+        } catch (err) {
+            toast.dismiss(loadingToast);
+            toast.error('Failed to create session. Try again?');
+            console.error('Session creation failed:', err);
         } finally {
             setLoading(false);
         }
@@ -132,14 +139,15 @@ export default function PracticeSetup() {
                 </ProfileCheck>
             </PrivateRoute>
         );
-
     }
+
+    const canStart = categories.length > 0 &&
+        (sessionType === 'general' || selectedJob);
 
     return (
         <PrivateRoute>
             <ProfileCheck>
                 <div className="min-h-screen bg-gray-700">
-                    {/* Header */}
                     <div className="bg-gray-700 border-b border-gray-600 px-4 sm:px-6 lg:px-8 py-6 pt-6">
                         <div className="max-w-4xl mx-auto">
                             <div className="flex items-center">
@@ -160,7 +168,6 @@ export default function PracticeSetup() {
                     </div>
 
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        {/* Session Type Selection */}
                         <div className={`${getCardClasses()} mb-6`}>
                             <div className="px-4 py-5 sm:p-6">
                                 <h2 className="text-lg font-medium text-white mb-4">Session Type</h2>
@@ -208,11 +215,9 @@ export default function PracticeSetup() {
                                             </label>
                                             <select
                                                 id="job-select"
-                                                name="job-select"
                                                 value={selectedJob}
-                                                onChange={handleJobChange}
+                                                onChange={selectJob}
                                                 className={`${getInputClasses()} block w-full sm:text-sm rounded-md appearance-none`}
-                                                required={sessionType === 'job-specific'}
                                             >
                                                 <option value="">Select a job...</option>
                                                 {jobs.map(job => (
@@ -221,7 +226,7 @@ export default function PracticeSetup() {
                                                     </option>
                                                 ))}
                                             </select>
-                                            {jobs.length === 0 && (
+                                            {!jobs.length && (
                                                 <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-md">
                                                     <p className="text-sm text-yellow-200">
                                                         You don't have any saved jobs yet.
@@ -244,7 +249,6 @@ export default function PracticeSetup() {
                                                 </label>
                                                 <textarea
                                                     id="job-description"
-                                                    name="job-description"
                                                     rows={5}
                                                     value={jobDescription}
                                                     onChange={(e) => setJobDescription(e.target.value)}
@@ -261,7 +265,6 @@ export default function PracticeSetup() {
                             </div>
                         </div>
 
-                        {/* Question Categories */}
                         <div className={`${getCardClasses()} mb-8`}>
                             <div className="px-4 py-5 sm:p-6">
                                 <h2 className="text-lg font-medium text-white mb-4">Question Categories</h2>
@@ -270,100 +273,32 @@ export default function PracticeSetup() {
                                 </p>
 
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <div className="relative">
-                                        <div className="flex items-start">
-                                            <div className="flex items-center h-5">
-                                                <input
-                                                    id="motivational"
-                                                    name="motivational"
-                                                    type="checkbox"
-                                                    checked={categories.includes('Motivational')}
-                                                    onChange={() => handleCategoryToggle('Motivational')}
-                                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-600 rounded bg-gray-700"
-                                                />
-                                            </div>
-                                            <div className="ml-3">
-                                                <label htmlFor="motivational" className="text-sm font-medium text-white">
-                                                    Motivational Questions
-                                                </label>
-                                                <p className="text-sm text-gray-400">
-                                                    Why this company? Why this role? Career goals and aspirations
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="relative">
-                                        <div className="flex items-start">
-                                            <div className="flex items-center h-5">
-                                                <input
-                                                    id="behavioral"
-                                                    name="behavioral"
-                                                    type="checkbox"
-                                                    checked={categories.includes('Behavioral')}
-                                                    onChange={() => handleCategoryToggle('Behavioral')}
-                                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-600 rounded bg-gray-700"
-                                                />
-                                            </div>
-                                            <div className="ml-3">
-                                                <label htmlFor="behavioral" className="text-sm font-medium text-white">
-                                                    Behavioral Questions
-                                                </label>
-                                                <p className="text-sm text-gray-400">
-                                                    Past experiences, teamwork, conflict resolution, leadership
-                                                </p>
+                                    {questionCategories.map(({ id, label, desc }) => (
+                                        <div key={id} className="relative">
+                                            <div className="flex items-start">
+                                                <div className="flex items-center h-5">
+                                                    <input
+                                                        id={id.toLowerCase()}
+                                                        type="checkbox"
+                                                        checked={categories.includes(id as QuestionCategory)}
+                                                        onChange={() => toggleCategory(id as QuestionCategory)}
+                                                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-600 rounded bg-gray-700"
+                                                    />
+                                                </div>
+                                                <div className="ml-3">
+                                                    <label htmlFor={id.toLowerCase()} className="text-sm font-medium text-white">
+                                                        {label}
+                                                    </label>
+                                                    <p className="text-sm text-gray-400">
+                                                        {desc}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="relative">
-                                        <div className="flex items-start">
-                                            <div className="flex items-center h-5">
-                                                <input
-                                                    id="technical"
-                                                    name="technical"
-                                                    type="checkbox"
-                                                    checked={categories.includes('Technical')}
-                                                    onChange={() => handleCategoryToggle('Technical')}
-                                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-600 rounded bg-gray-700"
-                                                />
-                                            </div>
-                                            <div className="ml-3">
-                                                <label htmlFor="technical" className="text-sm font-medium text-white">
-                                                    Technical Questions
-                                                </label>
-                                                <p className="text-sm text-gray-400">
-                                                    Role-specific skills, problem-solving, domain knowledge
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="relative">
-                                        <div className="flex items-start">
-                                            <div className="flex items-center h-5">
-                                                <input
-                                                    id="personality"
-                                                    name="personality"
-                                                    type="checkbox"
-                                                    checked={categories.includes('Personality')}
-                                                    onChange={() => handleCategoryToggle('Personality')}
-                                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-600 rounded bg-gray-700"
-                                                />
-                                            </div>
-                                            <div className="ml-3">
-                                                <label htmlFor="personality" className="text-sm font-medium text-white">
-                                                    Personality Questions
-                                                </label>
-                                                <p className="text-sm text-gray-400">
-                                                    Work style, strengths, weaknesses, cultural fit
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    ))}
                                 </div>
 
-                                {categories.length === 0 && (
+                                {!categories.length && (
                                     <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600/30 rounded-md">
                                         <p className="text-sm text-blue-200">
                                             💡 Select at least one category to start your practice session
@@ -373,12 +308,11 @@ export default function PracticeSetup() {
                             </div>
                         </div>
 
-                        {/* Start Session Button */}
                         <div className="flex justify-center">
                             <button
                                 type="button"
-                                onClick={handleStartSession}
-                                disabled={loading || categories.length === 0 || (sessionType === 'job-specific' && !selectedJob)}
+                                onClick={startSession}
+                                disabled={loading || !canStart}
                                 className={`${getButtonClasses('primary')} px-8 py-3 text-base font-medium transform transition-all hover:scale-105 disabled:hover:scale-100`}
                             >
                                 {loading ? (
@@ -395,7 +329,6 @@ export default function PracticeSetup() {
                             </button>
                         </div>
 
-                        {/* Tips Section */}
                         <div className={`${getCardClasses()} mt-8`}>
                             <div className="px-4 py-5 sm:p-6">
                                 <h3 className="text-lg font-medium text-white mb-4">💡 Practice Tips</h3>
