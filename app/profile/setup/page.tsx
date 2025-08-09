@@ -180,8 +180,8 @@ export default function ProfileSetup() {
                         </h1>
                         <p className="mt-3 text-xl text-gray-300">
                             {isEditMode
-                                ? 'Update your information to get better tailored interview questions.'
-                                : 'Help us understand your background to provide tailored interview questions.'}
+                                ? 'Update your information'
+                                : 'Help us understand your background'}
                         </p>
                     </div>
 

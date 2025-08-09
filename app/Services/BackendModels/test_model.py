@@ -91,8 +91,6 @@ Feedback:"""
 
 @app.route('/predictVoice', methods=['POST'])
 def predict_emotion():
-    if emotion_model is None:
-        return jsonify({"error": "Model not loaded"}), 500
         
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file"}), 400
@@ -126,9 +124,6 @@ def predict_emotion():
         # Store entire waveform for Whisper
         entire_waveform = waveform.copy()
         
-        if np.max(np.abs(waveform)) < 1e-6:
-            return jsonify({"error": "Audio too quiet"}), 400
-        
         waveform = waveform / np.max(np.abs(waveform))
         
         # Pad/cut waveform for emotion model
@@ -150,16 +145,13 @@ def predict_emotion():
         whisper_model.to(emotion_device)
 
         text = ""
-        try:
-            # Use entire waveform for Whisper transcription
-            inputs = whisper_processor(entire_waveform, sampling_rate=16000, return_tensors="pt")
-            inputs = inputs.to(emotion_device)
+        inputs = whisper_processor(entire_waveform, sampling_rate=16000, return_tensors="pt")
+        inputs = inputs.to(emotion_device)
                 
-            with torch.no_grad():
+        with torch.no_grad():
                 predicted_ids = whisper_model.generate(inputs["input_features"])
                 text = whisper_processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-        except Exception as e:
-                text = "Transcription failed"
+
         
         return jsonify({
             "predicted_emotion": emotion_labels[predicted_idx],

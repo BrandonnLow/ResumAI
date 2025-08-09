@@ -30,16 +30,12 @@ export const AdditionalInfoStep: React.FC<AdditionalInfoStepProps> = ({
                     value={profile.additionalInfo || ''}
                     onChange={onInputChange}
                     className={`${getInputClasses('textarea')} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
-                    placeholder="Any other information you'd like to include (certifications, languages, interests, etc.)"
+                    placeholder="Any other information"
                 />
             </div>
 
             <div className="bg-blue-900/20 border border-blue-600/30 p-6 rounded-lg">
                 <h3 className="text-lg font-medium text-blue-200 mb-2">Beautify My Profile</h3>
-                <p className="text-sm text-blue-300 mb-4">
-                    Let our AI enhance your profile content with better phrasing, structure, and emphasis.
-                    This can help polish your resume bullets and create LinkedIn-style summaries.
-                </p>
                 <button
                     type="button"
                     onClick={onBeautifyProfile}

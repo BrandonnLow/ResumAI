@@ -14,9 +14,7 @@ def convert_ogg_to_wav(ogg_path, wav_path):
     audio = AudioSegment.from_file(ogg_path)
     audio.export(wav_path, format="wav")
 
-def predict_emotion(audio_file_path):
-    file_ext = os.path.splitext(audio_file_path)[1].lower()
-    
+def predict_emotion(audio_file_path):    
     with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
         temp_wav_path = temp_wav.name
     convert_ogg_to_wav(audio_file_path, temp_wav_path)
@@ -54,13 +52,8 @@ def predict_emotion(audio_file_path):
     
     with torch.no_grad():
         outputs = emotion_model(waveform_tensor)
-        predicted_idx = torch.argmax(outputs, dim=1).item()
-        confidence = torch.softmax(outputs, dim=1).max().item()
         probabilities = torch.softmax(outputs, dim=1).squeeze().cpu().numpy()
     
-    print(f"testing file: {os.path.basename(audio_file_path)}")
-    print(f"result: {emotion_labels[predicted_idx]} ({confidence*100:.1f}% confident)")
-    print("all scores:", end=" ")
     for label, prob in zip(emotion_labels, probabilities):
         print(f"{label}={prob:.3f}", end=" ")
     
@@ -119,7 +112,7 @@ def load_emotion_model():
         return False
 
 def main():
-    audio_file_path = './testaudio.ogg'
+    audio_file_path = './testaudio.ogg' #from telegram
     
     global emotion_model, emotion_device, emotion_labels
     emotion_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

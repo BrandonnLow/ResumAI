@@ -36,7 +36,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                 />
                 {processingResume && <p className="mt-2 text-sm text-blue-400">Processing your resume...</p>}
 
-                {/* Debug info section */}
                 {debugInfo && (
                     <div className="mt-4 p-3 bg-gray-600 rounded-md">
                         <details>
@@ -65,7 +64,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-300">
-                            Full Name*
+                            Full Name
                         </label>
                         <input
                             type="text"
@@ -79,7 +78,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                     </div>
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                            Email*
+                            Email
                         </label>
                         <input
                             type="email"
@@ -115,7 +114,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                             value={profile.location || ''}
                             onChange={onInputChange}
                             className={`${getInputClasses()} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
-                            placeholder="City, State/Province, Country"
+                            placeholder="Location"
                         />
                     </div>
                 </div>
@@ -130,7 +129,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                         value={profile.summary || ''}
                         onChange={onInputChange}
                         className={`${getInputClasses('textarea')} mt-1 block w-full shadow-sm sm:text-sm border rounded-md`}
-                        placeholder="Brief overview of your professional background and career goals"
+                        placeholder="Your summary"
                     />
                 </div>
             </div>

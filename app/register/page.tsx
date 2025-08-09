@@ -25,7 +25,7 @@ export default function Register() {
         try {
             setLoading(true);
             await register(email, password);
-            toast.success('Account created successfully!');
+            toast.success('Account created');
             router.push('/profile/setup');
         } catch (error) {
             console.error(error);

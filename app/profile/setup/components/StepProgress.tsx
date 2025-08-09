@@ -24,7 +24,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                     {steps.map((step, stepIdx) => (
                         <li key={step.label} className={`${stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : ''} relative`}>
                             {activeStep > stepIdx ? (
-                                <>
+                                <div>
                                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
                                         <div className="h-0.5 w-full bg-blue-600" />
                                     </div>
@@ -37,9 +37,9 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                                         </svg>
                                         <span className="sr-only">{step.label}</span>
                                     </button>
-                                </>
+                                </div>
                             ) : activeStep === stepIdx ? (
-                                <>
+                                <div>
                                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
                                         <div className="h-0.5 w-full bg-gray-600" />
                                     </div>
@@ -51,9 +51,9 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                                         <span className="h-2.5 w-2.5 bg-blue-600 rounded-full" aria-hidden="true" />
                                         <span className="sr-only">{step.label}</span>
                                     </button>
-                                </>
+                                </div>
                             ) : (
-                                <>
+                                <div>
                                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
                                         <div className="h-0.5 w-full bg-gray-600" />
                                     </div>
@@ -64,7 +64,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                                         <span className="h-2.5 w-2.5 bg-transparent rounded-full group-hover:bg-gray-600" aria-hidden="true" />
                                         <span className="sr-only">{step.label}</span>
                                     </button>
-                                </>
+                                </div>
                             )}
                         </li>
                     ))}
