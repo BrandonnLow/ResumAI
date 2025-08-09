@@ -22,7 +22,7 @@ export default function Profile() {
     const [originalSummary, setOriginalSummary] = useState('');
     const [showComparison, setShowComparison] = useState(false);
     const [changedFields, setChangedFields] = useState<string[]>([]);
-    
+
     useEffect(() => {
         const fetchProfile = async () => {
             if (!currentUser) return;
@@ -41,16 +41,16 @@ export default function Profile() {
         fetchProfile();
     }, [currentUser, router]);
 
-    
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!currentUser || !profile) return; 
-        
+        if (!currentUser || !profile) return;
+
         try {
             setUpdating(true);
             await updateUserProfile({ ...formData, uid: currentUser.uid });
@@ -65,18 +65,18 @@ export default function Profile() {
         }
     };
 
-    
+
     const enhanceProfile = async () => {
         if (!profile) return;
-        
+
         try {
             setBeautifying(true);
             toast.loading('Enhancing with AI...');
             setOriginalSummary(formData.summary || '');
 
             const enhanced = await beautifyProfile(profile);
-            const changed = Object.keys(enhanced).filter(key => 
-                JSON.stringify(enhanced[key as keyof UserProfile]) !== 
+            const changed = Object.keys(enhanced).filter(key =>
+                JSON.stringify(enhanced[key as keyof UserProfile]) !==
                 JSON.stringify(profile[key as keyof UserProfile])
             );
 
@@ -98,7 +98,7 @@ export default function Profile() {
         }
     };
 
-    
+
     const ProfileSection = ({ title, description, items, editPath }: {
         title: string;
         description: string;
@@ -345,11 +345,10 @@ export default function Profile() {
                                 <button
                                     type="submit"
                                     disabled={updating}
-                                    className={`ml-3 px-4 py-2 rounded-md text-white ${
-                                        changedFields.length > 0 
-                                            ? 'bg-green-600 hover:bg-green-700' 
-                                            : 'bg-blue-600 hover:bg-blue-700'
-                                    } disabled:opacity-50`}
+                                    className={`ml-3 px-4 py-2 rounded-md text-white ${changedFields.length > 0
+                                        ? 'bg-green-600 hover:bg-green-700'
+                                        : 'bg-blue-600 hover:bg-blue-700'
+                                        } disabled:opacity-50`}
                                 >
                                     {updating ? 'Saving...' : changedFields.length > 0 ? 'Save Enhanced Profile' : 'Save Changes'}
                                 </button>
@@ -358,26 +357,26 @@ export default function Profile() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <ProfileSection 
-                            title="Education" 
+                        <ProfileSection
+                            title="Education"
                             description="Your academic background"
                             items={profile?.education || []}
                             editPath="/profile/setup"
                         />
-                        <ProfileSection 
-                            title="Work Experience" 
+                        <ProfileSection
+                            title="Work Experience"
                             description="Your professional experience"
                             items={profile?.workExperience || []}
                             editPath="/profile/setup"
                         />
-                        <ProfileSection 
-                            title="Skills" 
+                        <ProfileSection
+                            title="Skills"
                             description="Your technical and soft skills"
                             items={profile?.skills || []}
                             editPath="/profile/setup"
                         />
-                        <ProfileSection 
-                            title="Projects" 
+                        <ProfileSection
+                            title="Projects"
                             description="Your personal and academic projects"
                             items={profile?.projects || []}
                             editPath="/profile/setup"

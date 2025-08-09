@@ -80,7 +80,7 @@ export const useProfileSetup = () => {
 
         const file = e.target.files[0];
         const formData = new FormData();
-        formData.append("file", file); 
+        formData.append("file", file);
         // console.log(file)
 
         try {
@@ -94,7 +94,7 @@ export const useProfileSetup = () => {
             const data = await response.json();
 
             setProfile(data)
-            
+
         } catch (error) {
             console.error('Error processing resume:', error);
             toast.error('Failed to process resume. Please try again or enter details manually.');
