@@ -114,7 +114,7 @@ export const AnswerCard: React.FC<AnswerCardProps> = ({
         }
     };
 
-    // Cancel editing
+    // Cancel edit
     const cancelEdit = () => {
         setEditingAnswer(null);
         setEditText('');
